@@ -31,34 +31,3 @@ add_executable(Bokeh ${SRC_FILES})
 # ÃÌº”¡¥Ω”OpenCVø‚
 target_link_libraries(Bokeh ${OpenCV_LIBS})
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
