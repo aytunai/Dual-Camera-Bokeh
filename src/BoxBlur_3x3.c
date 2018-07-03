@@ -28,7 +28,7 @@
  */
 typedef struct {
 
-	xvTileManager tileMgr;
+	xvTileManager tileMgr;		// Memory Pools
 	int tileWidth;           	// tile width
 	int tileHeight;           	// tile height
 	int tilePitch;			  	// tile pitch
@@ -44,8 +44,8 @@ typedef struct {
 
 	//DataRAM double-buffer(tile buffer)(ping-pong buffer)
 	TileBuffer tileBuffer[2];
-	uint8_t *pdramIn[2];		// pointer of input double-buffer in DataRAM(return alloc tile , )
-	uint8_t *pdramOut[2];		// pointer of output double-buffer in DataRAM(return alloc tile)
+	uint8_t *pdramIn[2];		// pointer of input  double-buffer in DataRAM(return allocate origin pointer)
+	uint8_t *pdramOut[2];		// pointer of output double-buffer in DataRAM(return allocate origin pointer)
 
 	//局部变量使用,记录tile的信息,都保存在Ctx结构体当中
 	xi_tile srcTile;          	// source tile info
@@ -54,16 +54,14 @@ typedef struct {
 	// runtime related
 	xi_point srcPos[2];			//更新当前Tile的位置
 	xi_point dstPos[2];
-	int x_loop, y_loop;
-	int x_remain, y_remain;
 
 }BoxBlur_3x3_Context, *pBoxBlur_3x3_Context;
 
 /*
  * Initialize context.
  */
-static ErrorType BoxBlur3x3_InitializeContext(BoxBlur_3x3_Context *ctx , void *pSrc , int swidth , int sheight , int sstride ,
-		void *pDst , int dwidth , int dheight , int dstride)
+static ErrorType BoxBlur3x3_InitializeContext(BoxBlur_3x3_Context *ctx , void *pSrc , int swidth , int sheight , int spitch ,
+		void *pDst , int dwidth , int dheight , int dpitch)
 {
 	// Set DMA parameters. Changing DMA parameters and tile size will affect the
 	// effective DMA throughput.
@@ -78,8 +76,6 @@ static ErrorType BoxBlur3x3_InitializeContext(BoxBlur_3x3_Context *ctx , void *p
 	ctx->numOutstandingPIFReqs = 32;
 
 	//Config the source and destination pitch aligned with 64Bytes
-	int32_t spitch = swidth;
-	int32_t dpitch = dwidth;
 	int32_t sframeSize = spitch * sheight;
 	int32_t dframeSize = dpitch * dheight;
 
@@ -123,69 +119,63 @@ static ErrorType BoxBlur3x3_InitializeContext(BoxBlur_3x3_Context *ctx , void *p
 
 	// Allocate source frame in TM, and set its data pointer to the source frame buffer.
 	ctx->pSrcFrame = xvAllocateFrame(pTM);
+	ctx->pOutFrame = xvAllocateFrame(pTM);
 	if ((int32_t) ctx->pSrcFrame == XVTM_ERROR) {
 		return TM_ERROR;
 	}
-	SETUP_FRAME(ctx->pSrcFrame, pSrc, sframeSize, swidth, sheight, spitch, 0, 0, 1, 1, FRAME_EDGE_PADDING, 0);
-
-	// Allocate source frame in TM, and set its data pointer to the destination frame buffer.
-	ctx->pOutFrame = xvAllocateFrame(pTM);
 	if ((int32_t) ctx->pOutFrame == XVTM_ERROR) {
 		return TM_ERROR;
 	}
+	SETUP_FRAME(ctx->pSrcFrame, pSrc, sframeSize, swidth, sheight, spitch, 0, 0, 1, 1, FRAME_EDGE_PADDING, 0);
 	SETUP_FRAME(ctx->pOutFrame, pDst, dframeSize, dwidth, dheight, dpitch, 0, 0, 1, 1, FRAME_EDGE_PADDING, 0);
 
 	// Allocate input tile double-buffer. Here we allocate the double buffer 0 and 1 in
 	// different DataRAMs, to avoid access conflict between them.
-	//add 64bytes in order to aligned with 64 bytes
-	int tileInputBuffSize = (ctx->srcTile.pitch + 2*BOX_BLUR_3x3_RADIUS) * (ctx->srcTile.height + 2*BOX_BLUR_3x3_RADIUS) + 64;
-	int tileOutputBuffSize= (ctx->dstTile.pitch) * (ctx->dstTile.height);
+	// add 64bytes in order to aligned with 64 bytes
+	int tileInputBuffSize  = (ctx->srcTile.pitch + 2*BOX_BLUR_3x3_RADIUS) * (ctx->srcTile.height + 2*BOX_BLUR_3x3_RADIUS) + 64;
+	int tileOutputBuffSize = (ctx->dstTile.pitch) * (ctx->dstTile.height);
 
-	// Allocate input tile 0 in DataRAM0
+	// Allocate Input tile 0/1 in DataRAM 0/1
 	ctx->pdramIn[0] = xvAllocateBuffer(pTM, tileInputBuffSize, XV_MEM_BANK_COLOR_0, 64);
+	ctx->pdramIn[1] = xvAllocateBuffer(pTM, tileInputBuffSize, XV_MEM_BANK_COLOR_1, 64);
 	if ((int32_t) ctx->pdramIn[0] == XVTM_ERROR) {
+		return TM_ERROR;
+	}
+	if ((int32_t) ctx->pdramIn[1] == XVTM_ERROR) {
 		return TM_ERROR;
 	}
 	ctx->tileBuffer[0].pIn = xvAllocateTile(pTM);
 	if ((int32_t) ctx->tileBuffer[0].pIn == XVTM_ERROR) {
 		return TM_ERROR;
 	}
-	SETUP_TILE(ctx->tileBuffer[0].pIn , ctx->pdramIn[0], tileInputBuffSize, ctx->pSrcFrame, ctx->srcTile.width,
-			ctx->srcTile.height, ctx->srcTile.pitch, XV_TILE_U8, BOX_BLUR_3x3_RADIUS, BOX_BLUR_3x3_RADIUS, 0, 0, DATA_ALIGNED_64);
-
-	// Allocate input tile 1 in DataRAM1
-	ctx->pdramIn[1] = xvAllocateBuffer(pTM, tileInputBuffSize, XV_MEM_BANK_COLOR_1, 64);
-	if ((int32_t) ctx->pdramIn[1] == XVTM_ERROR) {
-		return TM_ERROR;
-	}
 	ctx->tileBuffer[1].pIn = xvAllocateTile(pTM);
 	if ((int32_t) ctx->tileBuffer[1].pIn == XVTM_ERROR) {
 		return TM_ERROR;
 	}
+	SETUP_TILE(ctx->tileBuffer[0].pIn , ctx->pdramIn[0], tileInputBuffSize, ctx->pSrcFrame, ctx->srcTile.width,
+			ctx->srcTile.height, ctx->srcTile.pitch, XV_TILE_U8, BOX_BLUR_3x3_RADIUS, BOX_BLUR_3x3_RADIUS, 0, 0, DATA_ALIGNED_64);
 	SETUP_TILE(ctx->tileBuffer[1].pIn , ctx->pdramIn[1], tileInputBuffSize, ctx->pSrcFrame, ctx->srcTile.width,
 			ctx->srcTile.height, ctx->srcTile.pitch, XV_TILE_U8, BOX_BLUR_3x3_RADIUS, BOX_BLUR_3x3_RADIUS, 0, 0, DATA_ALIGNED_64);
 
-	// Allocate output tile 0 in DataRAM0
+	// Allocate Output tile 0/1 in DataRAM 0/1
 	ctx->pdramOut[0] = xvAllocateBuffer(pTM, tileOutputBuffSize, XV_MEM_BANK_COLOR_0, 64);
+	ctx->pdramOut[1] = xvAllocateBuffer(pTM, tileOutputBuffSize, XV_MEM_BANK_COLOR_1, 64);
 	if ((int32_t) ctx->pdramOut[0] == XVTM_ERROR) {
+		return TM_ERROR;
+	}
+	if ((int32_t) ctx->pdramOut[1] == XVTM_ERROR) {
 		return TM_ERROR;
 	}
 	ctx->tileBuffer[0].pOut = xvAllocateTile(pTM);
 	if ((int32_t) ctx->tileBuffer[0].pOut == XVTM_ERROR) {
 		return TM_ERROR;
 	}
-	SETUP_TILE(ctx->tileBuffer[0].pOut , ctx->pdramOut[0], tileOutputBuffSize, ctx->pOutFrame, ctx->dstTile.width,
-			ctx->dstTile.height, ctx->dstTile.pitch, XV_TILE_U8, 0, 0, 0, 0, DATA_ALIGNED_64);
-
-	// Allocate output tile 1 in DataRAM1
-	ctx->pdramOut[1] = xvAllocateBuffer(pTM, tileOutputBuffSize, XV_MEM_BANK_COLOR_1, 64);
-	if ((int32_t) ctx->pdramOut[1] == XVTM_ERROR) {
-		return TM_ERROR;
-	}
 	ctx->tileBuffer[1].pOut = xvAllocateTile(pTM);
 	if ((int32_t) ctx->tileBuffer[1].pOut == XVTM_ERROR) {
 		return TM_ERROR;
 	}
+	SETUP_TILE(ctx->tileBuffer[0].pOut , ctx->pdramOut[0], tileOutputBuffSize, ctx->pOutFrame, ctx->dstTile.width,
+			ctx->dstTile.height, ctx->dstTile.pitch, XV_TILE_U8, 0, 0, 0, 0, DATA_ALIGNED_64);
 	SETUP_TILE(ctx->tileBuffer[1].pOut , ctx->pdramOut[1], tileOutputBuffSize, ctx->pOutFrame, ctx->dstTile.width,
 			ctx->dstTile.height, ctx->dstTile.pitch, XV_TILE_U8, 0, 0, 0, 0, DATA_ALIGNED_64);
 
@@ -212,16 +202,15 @@ static inline ErrorType ScheduleInputDMA(BoxBlur_3x3_Context *ctx, xi_point *src
 	xi_size srcSize, dstSize;
 
 	// Compute input tile position and size using output tile position and size.
-	dstSize.width 	= MAX(0, MIN(ctx->dstTile.width,  ctx->pOutFrame->frameWidth - dstPos->x));
+	dstSize.width 	= MAX(0, MIN(ctx->dstTile.width,  ctx->pOutFrame->frameWidth  - dstPos->x));
 	dstSize.height 	= MAX(0, MIN(ctx->dstTile.height, ctx->pOutFrame->frameHeight - dstPos->y));
-	srcSize.width 	= MAX(0, MIN(ctx->srcTile.width,  ctx->pSrcFrame->frameWidth - srcPos->x));
+	srcSize.width 	= MAX(0, MIN(ctx->srcTile.width,  ctx->pSrcFrame->frameWidth  - srcPos->x));
 	srcSize.height 	= MAX(0, MIN(ctx->srcTile.height, ctx->pSrcFrame->frameHeight - srcPos->y));
-
 
 	// Update output tile parameters
 	XV_TILE_UPDATE_DIMENSIONS(tileBuf->pOut, dstPos->x, dstPos->y, dstSize.width, dstSize.height, ctx->dstTile.pitch);
 
-	int tw = ((srcPos->x + ctx->srcTile.width) >= ctx->pSrcFrame->frameWidth) ? (srcSize.width):(ctx->srcTile.width);
+	int tw = ((srcPos->x + ctx->srcTile.width)  >= ctx->pSrcFrame->frameWidth)  ? (srcSize.width):(ctx->srcTile.width);
 	int th = ((srcPos->y + ctx->srcTile.height) >= ctx->pSrcFrame->frameHeight) ? (srcSize.height):(ctx->srcTile.height);
 	// Update input tile parameters and issue the DMA request
 	XV_TILE_UPDATE_DIMENSIONS(tileBuf->pIn, srcPos->x, srcPos->y, tw,th, ctx->srcTile.pitch);
@@ -237,69 +226,11 @@ static inline ErrorType ScheduleInputDMA(BoxBlur_3x3_Context *ctx, xi_point *src
 		srcPos->y += srcSize.height;
 		srcPos->x = 0;
 	}
-#ifdef BOX_BLUR_3x3_DEBUG
-//   (((uint8_t *) XV_TILE_GET_DATA_PTR(t) + (XV_TILE_GET_WIDTH(t) + XV_TILE_GET_EDGE_WIDTH(t)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) + (XV_TILE_GET_PITCH(t) * (XV_TILE_GET_HEIGHT(t) + XV_TILE_GET_EDGE_HEIGHT(t) - 1)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) / XV_TYPE_CHANNELS(XV_TILE_GET_TYPE(t))) \
-//	<= ((uint8_t *) XV_TILE_GET_BUFF_PTR(t) + XV_TILE_GET_BUFF_SIZE(t))));
 
-	xvTile *t = tileBuf->pIn;
-	uint8_t *p_start = (((uint8_t *) XV_TILE_GET_DATA_PTR(t) + (XV_TILE_GET_WIDTH(t) + XV_TILE_GET_EDGE_WIDTH(t)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) 	\
-			+ (XV_TILE_GET_PITCH(t) * (XV_TILE_GET_HEIGHT(t) + XV_TILE_GET_EDGE_HEIGHT(t) - 1)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) / XV_TYPE_CHANNELS(XV_TILE_GET_TYPE(t))));
-	uint8_t *p_end = ((uint8_t *) XV_TILE_GET_BUFF_PTR(t) + XV_TILE_GET_BUFF_SIZE(t));
-	if(p_start < p_end){
-//		p_start++;
-	}
-	else{
-//		p_end++;
-	}
-
-	uint8_t *data_ptr = XV_TILE_GET_DATA_PTR(t);
-	int tile_width = XV_TILE_GET_WIDTH(t);
-	int edge_width = XV_TILE_GET_EDGE_WIDTH(t);
-	int elem_size = XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t));
-	int tile_pitch = XV_TILE_GET_PITCH(t);
-	int tile_height = XV_TILE_GET_HEIGHT(t);
-	int tile_edge_height = XV_TILE_GET_EDGE_HEIGHT(t);
-	int tile_type_elem_size =  XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t));
-	int tile_type_channels =  XV_TYPE_CHANNELS(XV_TILE_GET_TYPE(t));
-
-	uint8_t *buffer_ptr = (uint8_t *)XV_TILE_GET_BUFF_PTR(t);
-	int buffer_size = XV_TILE_GET_BUFF_SIZE(t);
-#endif
-
-	//tranfer data from external memory bank to dram
+	//Transfer data from external memory bank to Local DRAM
 	int32_t retVal = xvReqTileTransferIn(pTM, tileBuf->pIn , NULL , 0);
 	if (retVal == XVTM_ERROR) {
 		return TM_ERROR;
-	}
-
-	return NO_ERROR;
-}
-
-//这个函数将来是做BoxBlur的Kernel函数
-static ErrorType ProcessKernel(TileBuffer *buffer)
-{
-	int i , j;
-	int n = buffer->pIn->width * buffer->pIn->height;
-
-	int swdith = buffer->pIn->width , sheight = buffer->pIn->height;
-	int spitch = buffer->pIn->pitch;
-
-	int dwidth = buffer->pOut->width , dheight = buffer->pOut->height;
-	int dpitch = buffer->pOut->pitch;
-
-	uint8_t * __restrict psrc;
-	uint8_t * __restrict pdst;
-
-	psrc = buffer->pIn->pData;
-	pdst = buffer->pOut->pData;
-
-	for(j = 0 ; j < dheight ; j++){
-		for(i = 0 ; i < dpitch ; i++){
-			pdst[i] = psrc[i];
-		}
-
-		psrc += spitch;
-		pdst += dpitch;
 	}
 
 	return NO_ERROR;
@@ -324,6 +255,7 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 
 	valign a_st = IVP_ZALIGN();
 	int i , j = 0;
+	// j < width - XCHAL_IVPN_SIMD_WIDTH --> j < width + 2 - XCHAL_IVPN_SIMD_WIDTH(input中的一个SIMD的宽度)
 	for( ; j < width - XCHAL_IVPN_SIMD_WIDTH ; j += 2 * XCHAL_IVPN_SIMD_WIDTH , psrc += 1 , pdst += 1) {
 
 		xb_vecNx16 l0 , h0;
@@ -421,12 +353,9 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 			xb_vec2Nx8U vsel0;   IVP_LAV2NX8U_XP(vsel0 , a_load , rsrc , width + 2 - j);
 			rsrc = tsrc;
 
-
 			//一次计算三次的乘加
 			xb_vec2Nx24 w = IVP_MULUS4T2N8XR8(0, vsel0, 0x00010101);
-
 			xb_vecNx16 l2 = IVP_CVT16U2NX24L(w);
-
 			xb_vecNx16 vdst =  IVP_MULNX16PACKQ(Q15_1div9, IVP_ADDNX16(l2, IVP_ADDNX16(l1, l0)));
 
 			IVP_SAVNX8U_XP(vdst, a_st, rdst_2, width - j);
@@ -438,9 +367,6 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 			l1 = l2;
 		}
 	}
-
-
-
 	return NO_ERROR;
 }
 
@@ -487,9 +413,6 @@ static ErrorType BoxBlur_Y_3x3_U8_C(TileBuffer *buffer)
 		}
 	}
 
-
-
-
 	return NO_ERROR;
 }
 
@@ -526,10 +449,9 @@ static ErrorType BoxBlur_3x3_Process(BoxBlur_3x3_Context *ctx)
 
 		// Wait for the input tile transfer to be finished
 		WAIT_FOR_TILE(pTM, pTileBuffer->pIn);
-//		xvPadEdges(pTM , pTileBuffer->pIn);
 
 		// Process the Buffer
-		//ProcessKernel(pTileBuffer);
+		// ProcessKernel(pTileBuffer);
 #ifdef CADENCE_OPT_BOX_BLUR
 		BoxBlur_Y_3x3_U8_Cadence(pTileBuffer);
 #else
@@ -577,12 +499,6 @@ static ErrorType BoxBlur_3x3_ReleaseContext(BoxBlur_3x3_Context *ctx)
 		return TM_ERROR;
 	}
 
-//	 Free tile data buffers
-//	retVal = xvFreeAllBuffers(pTM);
-//	if (retVal == XVTM_ERROR) {
-//		return TM_ERROR;
-//	}
-
 	// Free tiles
 	retVal = xvFreeAllTiles(pTM);
 	if (retVal == XVTM_ERROR) {
@@ -598,12 +514,12 @@ static ErrorType BoxBlur_3x3_ReleaseContext(BoxBlur_3x3_Context *ctx)
 
 
 //BoxBlur for Y-component
-void BoxBlur_3x3_U8(uint8_t *src , uint8_t *dst , int width , int height , int stride)
+void BoxBlur_3x3_U8(uint8_t *src , uint8_t *dst , int width , int height , int pitch)
 {
 
 	BoxBlur_3x3_Context ctx;
 
-	BoxBlur3x3_InitializeContext(&ctx , src , width , height , stride ,dst , width , height , stride);
+	BoxBlur3x3_InitializeContext(&ctx , src , width , height , pitch ,dst , width , height , pitch);
 
 
 	BoxBlur_3x3_Process(&ctx);

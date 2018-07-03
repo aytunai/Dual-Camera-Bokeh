@@ -440,22 +440,6 @@ void UV_Seperate_U8(uint8_t *pUV , uint8_t *pU , uint8_t *pV , int width , int h
 	Seperate_UV_Process(&ctx);
 
 	Seperate_UV_ReleaseContext(&ctx);
-
-#if 0
-	//调试输出的Output结果
-	unsigned char UFileName[256] , VFileName[256];
-	sprintf(UFileName   , "%s//u_720_540" , OUTPUT_FILE_PATH);
-	sprintf(VFileName   , "%s//v_720_540" , OUTPUT_FILE_PATH);
-	remove(UFileName);
-	remove(VFileName);
-	FILE *fpU = fopen(UFileName , "wb+");
-	FILE *fpV = fopen(VFileName , "wb+");
-	fwrite(pU , stride * height , sizeof(uint8_t) , fpU);
-	fwrite(pV , stride * height , sizeof(uint8_t) , fpV);
-	fclose(fpU);
-	fclose(fpV);
-#endif
-
 }
 
 

@@ -63,9 +63,9 @@ int main()
 
 	//Ö´ÐÐseperateµÄ²Ù×÷
 	UV_Seperate_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
-#if 0
-	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 
+	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+#if 0
 	BoxBlur_3x3_U8(tudata , udata , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 
 	BoxBlur_3x3_U8(tvdata , vdata , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
@@ -106,13 +106,12 @@ int main()
 #endif
 
 #ifdef DEBUG_OUTPUT_BOXBLUR_3x3_FILE
-	remove("C://dump//boxBlur3x3//cadence//yuvIn.bin");
-	remove("C://dump//boxBlur3x3//cadence//yuvOut.bin");
-	FILE *fpYUVIn  = fopen("C://dump//boxBlur3x3//yuvIn.bin" , "wb+");
-	FILE *fpYUVOut = fopen("C://dump//boxBlur3x3//yuvOut.bin" , "wb+");
-	fwrite(yuv.pY     , (PIC_PITCH * PIC_HEIGHT) + ((PIC_PITCH * PIC_HEIGHT) >> 1) , sizeof(uint8_t) , fpYUVIn);
-	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT) + ((PIC_PITCH * PIC_HEIGHT) >> 1) , sizeof(uint8_t) , fpYUVOut);
-	fclose(fpYUVIn);
+	char BlurYFileName[256];
+	sprintf(BlurYFileName, "%s//blur_y_1440_1080", OUTPUT_FILE_PATH);
+	remove(BlurYFileName);
+
+	FILE *fpYUVOut = fopen(BlurYFileName , "wb+");
+	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpYUVOut);
 	fclose(fpYUVOut);
 #endif
 

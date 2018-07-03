@@ -18,13 +18,13 @@
 #define DEBUG_READ_YUV_FILE
 
 //输出Seperate模块调试信息的数据
-#define DEBUG_SEPERATE_OUTPUT_FILE
+//#define DEBUG_SEPERATE_OUTPUT_FILE
 
 //输出Combine模块调试信息的数据
-#define DEBUG_COMBINE_OUTPUT_FILE
+//#define DEBUG_COMBINE_OUTPUT_FILE
 
 
-//#define DEBUG_OUTPUT_BOXBLUR_3x3_FILE
+#define DEBUG_OUTPUT_BOXBLUR_3x3_FILE
 
 
 #endif /*  */
