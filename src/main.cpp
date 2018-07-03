@@ -36,7 +36,7 @@ int main()
 	fread(pYUV, IMG_PITCH * IMG_HEIGHT * 3 / 2, sizeof(uint8_t), fpYUV);
 	fclose(fpYUV);
 
-	uint8_t *pY = pYUV;
+	uint8_t *pY  = pYUV;
 	uint8_t *pUV = pY + (IMG_PITCH * IMG_HEIGHT);
 
 	Mat  yImg(IMG_HEIGHT	 , IMG_PITCH     , CV_8U, pY);
@@ -44,10 +44,13 @@ int main()
 	Mat  uImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 	Mat  vImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 
+	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+
 	seperateUV(uvImg, uImg, vImg);
+	blur(yImg , yOutImg , Size(3, 3) , Point(-1,-1),  BORDER_REPLICATE);
 	combineUV(uImg, vImg, uvImg);
 
-#if 1
+#if 0
 	char UFileName[256], VFileName[256];
 	sprintf(UFileName, "%s//u_720_540", OUTPUT_FILE_PATH);
 	sprintf(VFileName, "%s//v_720_540", OUTPUT_FILE_PATH);
@@ -65,7 +68,7 @@ int main()
 	vFile.write((char *)vImg.data, (IMG_HEIGHT >> 1) * (IMG_PITCH >> 1));
 #endif
 
-#if 1
+#if 0
 	char UVFileName[256];
 	sprintf(UVFileName, "%s//uv_720_540", OUTPUT_FILE_PATH);
 	remove(UVFileName);
@@ -80,12 +83,25 @@ int main()
 
 #endif
 
+#if 1
+	char BlurYFileName[FILENAME_LEN];
+	sprintf(BlurYFileName, "%s//blur_y_1440_1080", OUTPUT_FILE_PATH);
+	remove(BlurYFileName);
 
+	ofstream blurYFile;
+	blurYFile.open(BlurYFileName, ios::binary);
+	if (!blurYFile){
+		printf("read UV File Error\n");
+		return 0;
+	}
+	blurYFile.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
+
+#endif
 
 #ifdef PC_TEST
 	imshow("yImg", yImg);
-	imshow("uImg", uImg);
-	imshow("vImg", vImg);
+	imshow("yOutImg", yOutImg);
+
 	cvWaitKey(0);
 #endif
 
