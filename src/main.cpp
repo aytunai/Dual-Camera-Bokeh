@@ -19,8 +19,6 @@ using namespace std;
 
 #define FILENAME_LEN		256
 
-
-
 int main()
 {
 	char inputImgFileName[FILENAME_LEN];
@@ -47,9 +45,10 @@ int main()
 	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
 	seperateUV(uvImg, uImg, vImg);
-	blur(yImg , yOutImg , Size(5, 5) , Point(-1,-1),  BORDER_REPLICATE);
+	//blur(yImg , yOutImg , Size(5, 5) , Point(-1,-1),  BORDER_REPLICATE);
+	GaussianBlur(yImg, yOutImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
 	combineUV(uImg, vImg, uvImg);
-
+//Seperate
 #if 0
 	char UFileName[256], VFileName[256];
 	sprintf(UFileName, "%s//u_720_540", OUTPUT_FILE_PATH);
@@ -68,6 +67,7 @@ int main()
 	vFile.write((char *)vImg.data, (IMG_HEIGHT >> 1) * (IMG_PITCH >> 1));
 #endif
 
+//Combine
 #if 0
 	char UVFileName[256];
 	sprintf(UVFileName, "%s//uv_720_540", OUTPUT_FILE_PATH);
@@ -83,6 +83,7 @@ int main()
 
 #endif
 
+//BoxBlur 3x3
 #if 0
 	char BlurY3x3FileName[FILENAME_LEN];
 	sprintf(BlurY3x3FileName, "%s//blur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
@@ -98,7 +99,8 @@ int main()
 
 #endif
 
-#if 1
+//BoxBlur 5x5
+#if 0
 	char BlurY5x5FileName[FILENAME_LEN];
 	sprintf(BlurY5x5FileName, "%s//blur_y_5x5_1440_1080", OUTPUT_FILE_PATH);
 	remove(BlurY5x5FileName);
@@ -110,6 +112,21 @@ int main()
 		return 0;
 	}
 	blurY5x5File.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
+
+#endif
+
+#if 1
+	char GaussBlurY5x5FileName[FILENAME_LEN];
+	sprintf(GaussBlurY5x5FileName, "%s//gaussBlur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
+	remove(GaussBlurY5x5FileName);
+
+	ofstream gaussBlurY5x5File;
+	gaussBlurY5x5File.open(GaussBlurY5x5FileName, ios::binary);
+	if (!gaussBlurY5x5File){
+		printf("read UV File Error\n");
+		return 0;
+	}
+	gaussBlurY5x5File.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
 
 #endif
 
