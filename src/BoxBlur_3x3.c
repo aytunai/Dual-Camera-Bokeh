@@ -9,9 +9,9 @@
 #include "BoxBlur_3x3.h"
 
 //自定义的tile的大小
-#define BOX_BLUR_TILE_WIDTH			64
-#define BOX_BLUR_TILE_HEIGHT 		64
-#define BOX_BLUR_TILE_PITCH		 	64
+#define BOX_BLUR_TILE_WIDTH			256
+#define BOX_BLUR_TILE_HEIGHT 		128
+#define BOX_BLUR_TILE_PITCH		 	256
 
 //定义放缩,1/9 * 2^15(32768) = 3640.8888，除数大一些，防止数据越界超过255
 #define Q15_1div9	3641
