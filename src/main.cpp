@@ -47,7 +47,7 @@ int main()
 	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
 	seperateUV(uvImg, uImg, vImg);
-	blur(yImg , yOutImg , Size(3, 3) , Point(-1,-1),  BORDER_REPLICATE);
+	blur(yImg , yOutImg , Size(5, 5) , Point(-1,-1),  BORDER_REPLICATE);
 	combineUV(uImg, vImg, uvImg);
 
 #if 0
@@ -83,20 +83,36 @@ int main()
 
 #endif
 
-#if 1
-	char BlurYFileName[FILENAME_LEN];
-	sprintf(BlurYFileName, "%s//blur_y_1440_1080", OUTPUT_FILE_PATH);
-	remove(BlurYFileName);
+#if 0
+	char BlurY3x3FileName[FILENAME_LEN];
+	sprintf(BlurY3x3FileName, "%s//blur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
+	remove(BlurY3x3FileName);
 
-	ofstream blurYFile;
-	blurYFile.open(BlurYFileName, ios::binary);
-	if (!blurYFile){
+	ofstream blurY3x3File;
+	blurY3x3File.open(BlurY3x3FileName, ios::binary);
+	if (!blurY3x3File){
 		printf("read UV File Error\n");
 		return 0;
 	}
-	blurYFile.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
+	blurY3x3File.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
 
 #endif
+
+#if 1
+	char BlurY5x5FileName[FILENAME_LEN];
+	sprintf(BlurY5x5FileName, "%s//blur_y_5x5_1440_1080", OUTPUT_FILE_PATH);
+	remove(BlurY5x5FileName);
+
+	ofstream blurY5x5File;
+	blurY5x5File.open(BlurY5x5FileName, ios::binary);
+	if (!blurY5x5File){
+		printf("read UV File Error\n");
+		return 0;
+	}
+	blurY5x5File.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
+
+#endif
+
 
 #ifdef PC_TEST
 	imshow("yImg", yImg);

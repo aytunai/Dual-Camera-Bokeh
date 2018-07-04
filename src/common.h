@@ -1,7 +1,7 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-//#define PC_TEST	//PC²âÊÔµÄºê
+#define PC_TEST	//PC²âÊÔµÄºê
 
 // Error type code
 typedef enum {
