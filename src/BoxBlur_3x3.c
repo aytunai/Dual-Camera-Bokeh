@@ -237,7 +237,7 @@ static inline ErrorType ScheduleInputDMA(BoxBlur_3x3_Context *ctx, xi_point *src
 }
 
 //Y-component boxBlur , size = 3x3,cadence°æ±¾
-static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
+static ErrorType BoxBlur_3x3_U8_Cadence(TileBuffer *buffer)
 {
 	xvTile *pTileIn  = buffer->pIn;
 	xvTile *pTileOut = buffer->pOut;
@@ -370,7 +370,7 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 }
 
 //Y-component boxBlur , size = 3x3,C°æ±¾
-static ErrorType BoxBlur_Y_3x3_U8_C(TileBuffer *buffer)
+static ErrorType BoxBlur_3x3_U8_C(TileBuffer *buffer)
 {
 	xvTile *pTileIn  = buffer->pIn;
 	xvTile *pTileOut = buffer->pOut;
@@ -452,9 +452,9 @@ static ErrorType BoxBlur_3x3_Process(BoxBlur_3x3_Context *ctx)
 		// Process the Buffer
 		// ProcessKernel(pTileBuffer);
 #ifdef CADENCE_OPT_BOX_BLUR_3x3
-		BoxBlur_Y_3x3_U8_Cadence(pTileBuffer);
+		BoxBlur_3x3_U8_Cadence(pTileBuffer);
 #else
-		BoxBlur_Y_3x3_U8_C(pTileBuffer);
+		BoxBlur_3x3_U8_C(pTileBuffer);
 
 #endif
 

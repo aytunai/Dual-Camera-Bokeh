@@ -21,6 +21,8 @@
 #include "tileManager.h"
 
 #include "BoxBlur_3x3.h"
+#include "BoxBlur_5x5.h"
+#include "GaussBlur_3x3.h"
 #include "Seperate.h"
 #include "Combine.h"
 
@@ -59,17 +61,18 @@ int main()
 #endif
 
 	//执行seperate的操作
-	UV_Seperate_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
+//	UV_Seperate_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 
-	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+//	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 //	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+	GaussBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 #if 0
 	BoxBlur_3x3_U8(tudata , udata , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 
 	BoxBlur_3x3_U8(tvdata , vdata , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 #endif
 	//执行combine
-	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
+//	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
 
 
 #ifdef DEBUG_SEPERATE_OUTPUT_FILE
@@ -119,6 +122,16 @@ int main()
 	remove(BlurYFileName);
 
 	FILE *fpYUVOut = fopen(BlurYFileName , "wb+");
+	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpYUVOut);
+	fclose(fpYUVOut);
+#endif
+
+#ifdef DEBUG_OUTPUT_GAUSSBLUR_3x3_FILE
+	char GaussBlurYFileName[256];
+	sprintf(GaussBlurYFileName, "%s//gaussBlur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
+	remove(GaussBlurYFileName);
+
+	FILE *fpYUVOut = fopen(GaussBlurYFileName , "wb+");
 	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpYUVOut);
 	fclose(fpYUVOut);
 #endif
