@@ -26,5 +26,7 @@
 
 #define DEBUG_OUTPUT_BOXBLUR_3x3_FILE
 
+//#define DEBUG_OUTPUT_BOXBLUR_5x5_FILE
+
 
 #endif /*  */

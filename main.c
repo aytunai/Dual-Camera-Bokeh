@@ -27,7 +27,6 @@
 #include "Debug.h"
 
 //这个数据量小，仿真的速度快
-//#define PIC_WIDTH  1440
 #define PIC_WIDTH  1440
 #define PIC_HEIGHT 1080
 #define PIC_PITCH  1440
@@ -47,8 +46,6 @@ int main()
 	yuv_out.pU   = (uint8_t *)malloc( (PIC_PITCH >> 1) * (PIC_HEIGHT >> 1) * sizeof(uint8_t) );
 	yuv_out.pV   = (uint8_t *)malloc( (PIC_PITCH >> 1) * (PIC_HEIGHT >> 1) * sizeof(uint8_t) );
 
-
-
 #ifdef DEBUG_READ_YUV_FILE
 	unsigned char YUVFileName[256];
 	sprintf(YUVFileName , "%s//in_yuv_1440_1080" , INPUT_FILE_PATH);
@@ -65,6 +62,7 @@ int main()
 	UV_Seperate_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 
 	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+//	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 #if 0
 	BoxBlur_3x3_U8(tudata , udata , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 
@@ -107,7 +105,17 @@ int main()
 
 #ifdef DEBUG_OUTPUT_BOXBLUR_3x3_FILE
 	char BlurYFileName[256];
-	sprintf(BlurYFileName, "%s//blur_y_1440_1080", OUTPUT_FILE_PATH);
+	sprintf(BlurYFileName, "%s//blur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
+	remove(BlurYFileName);
+
+	FILE *fpYUVOut = fopen(BlurYFileName , "wb+");
+	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpYUVOut);
+	fclose(fpYUVOut);
+#endif
+
+#ifdef DEBUG_OUTPUT_BOXBLUR_5x5_FILE
+	char BlurYFileName[256];
+	sprintf(BlurYFileName, "%s//blur_y_5x5_1440_1080", OUTPUT_FILE_PATH);
 	remove(BlurYFileName);
 
 	FILE *fpYUVOut = fopen(BlurYFileName , "wb+");

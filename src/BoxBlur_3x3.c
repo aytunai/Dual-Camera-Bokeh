@@ -247,7 +247,7 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 	int width   = XI_TILE_GET_WIDTH(pTileIn);
 	int height  = XI_TILE_GET_HEIGHT(pTileIn);
 
-	xb_vec2Nx8U *psrc = OFFSET_PTR_2NX8U( XI_TILE_GET_DATA_PTR(pTileIn) , -1 , sstride , -BOX_BLUR_3x3_RADIUS );
+	xb_vec2Nx8U *psrc = OFFSET_PTR_2NX8U( XI_TILE_GET_DATA_PTR(pTileIn) , -BOX_BLUR_3x3_RADIUS , sstride , -BOX_BLUR_3x3_RADIUS );
 	xb_vec2Nx8U *pdst = (xb_vec2Nx8U *)XI_TILE_GET_DATA_PTR(pTileOut);
 
 	xb_vec2Nx8U* __restrict rsrc;
@@ -290,7 +290,6 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 			h1 = IVP_CVT16U2NX24H(w);
 		}
 
-
 		for(i = 0 ; i < height ; i++){
 			valign a_load = IVP_LA2NX8U_PP(rsrc);
 			xb_vec2Nx8U vsel0; IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, width + 2 - j);
@@ -327,7 +326,7 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 		int offd = dstride - (width - j);
 
 		xb_vecNx16 l0 , l1;
-		{ // row 0
+		{ 	// row 0
 			valign a_load = IVP_LA2NX8U_PP(rsrc);
 			xb_vec2Nx8U vsel0;   IVP_LAV2NX8U_XP(vsel0 , a_load , rsrc , width + 2 - j);
 			rsrc = OFFSET_PTR_2NX8U(rsrc , 1 , offs , 0);
@@ -337,7 +336,7 @@ static ErrorType BoxBlur_Y_3x3_U8_Cadence(TileBuffer *buffer)
 			l0 = IVP_CVT16U2NX24L(w);
 		}
 
-		{ // row 1
+		{ 	// row 1
 			valign a_load = IVP_LA2NX8U_PP(rsrc);
 			xb_vec2Nx8U vsel0;   IVP_LAV2NX8U_XP(vsel0 , a_load , rsrc , width + 2 - j);
 			rsrc = OFFSET_PTR_2NX8U(rsrc , 1 , offs , 0);
@@ -452,7 +451,7 @@ static ErrorType BoxBlur_3x3_Process(BoxBlur_3x3_Context *ctx)
 
 		// Process the Buffer
 		// ProcessKernel(pTileBuffer);
-#ifdef CADENCE_OPT_BOX_BLUR
+#ifdef CADENCE_OPT_BOX_BLUR_3x3
 		BoxBlur_Y_3x3_U8_Cadence(pTileBuffer);
 #else
 		BoxBlur_Y_3x3_U8_C(pTileBuffer);

@@ -13,7 +13,7 @@
 #include "Utility.h"
 
 
-#define CADENCE_OPT_BOX_BLUR
+#define CADENCE_OPT_BOX_BLUR_3x3
 
 
 
