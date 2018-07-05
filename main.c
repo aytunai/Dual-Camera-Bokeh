@@ -25,6 +25,7 @@
 #include "GaussBlur_3x3.h"
 #include "Seperate.h"
 #include "Combine.h"
+#include "DownScaleBy2.h"
 
 #include "Debug.h"
 
@@ -62,15 +63,11 @@ int main()
 
 	//执行seperate的操作
 //	UV_Seperate_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
-
+//
 //	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 //	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
-	GaussBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
-#if 0
-	BoxBlur_3x3_U8(tudata , udata , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
-
-	BoxBlur_3x3_U8(tvdata , vdata , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
-#endif
+//	GaussBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+	downScaleBy2_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 	//执行combine
 //	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
 
@@ -133,6 +130,16 @@ int main()
 
 	FILE *fpYUVOut = fopen(GaussBlurYFileName , "wb+");
 	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpYUVOut);
+	fclose(fpYUVOut);
+#endif
+
+#ifdef DEBUG_OUTPUT_DOWNSCALE_BY2_FILE
+	char DownScaleBy2FileName[256];
+	sprintf(DownScaleBy2FileName, "%s//downScaleBy2_1440_1080", OUTPUT_FILE_PATH);
+	remove(DownScaleBy2FileName);
+
+	FILE *fpYUVOut = fopen(DownScaleBy2FileName , "wb+");
+	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT / 4), sizeof(uint8_t) , fpYUVOut);
 	fclose(fpYUVOut);
 #endif
 
