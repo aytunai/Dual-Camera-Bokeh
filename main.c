@@ -26,6 +26,7 @@
 #include "Seperate.h"
 #include "Combine.h"
 #include "DownScaleBy2.h"
+#include "UpScaleBy2.h"
 
 #include "Debug.h"
 
@@ -68,6 +69,7 @@ int main()
 //	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 //	GaussBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 	downScaleBy2_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+	upScaleBy2_U8(yuv_out.pY , yuv.pY , PIC_WIDTH >> 1 , PIC_HEIGHT >> 1 , PIC_PITCH >> 1);
 	//Ö´ÐÐcombine
 //	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
 
@@ -140,6 +142,16 @@ int main()
 
 	FILE *fpYUVOut = fopen(DownScaleBy2FileName , "wb+");
 	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT / 4), sizeof(uint8_t) , fpYUVOut);
+	fclose(fpYUVOut);
+#endif
+
+#ifdef DEBUG_OUTPUT_UPSCALE_BY2_FILE
+	char UpScaleBy2FileName[256];
+	sprintf(UpScaleBy2FileName, "%s//upScaleBy2_1440_1080", OUTPUT_FILE_PATH);
+	remove(UpScaleBy2FileName);
+
+	FILE *fpYUVOut = fopen(UpScaleBy2FileName , "wb+");
+	fwrite(yuv.pY , PIC_PITCH * PIC_HEIGHT, sizeof(uint8_t) , fpYUVOut);
 	fclose(fpYUVOut);
 #endif
 
