@@ -2,6 +2,7 @@
 #include "OpencvCommon.h"
 #include "Seperate.h"
 #include "Combine.h"
+#include "downScaleBy2.h"
 #include "common.h"
 #include "iostream"
 #include "fstream"
@@ -41,13 +42,16 @@ int main()
 	Mat uvImg(IMG_HEIGHT >> 1, IMG_PITCH     , CV_8U, pUV);
 	Mat  uImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 	Mat  vImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+	Mat  downScaleImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 
 	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
-	seperateUV(uvImg, uImg, vImg);
+	downScaleBy2(yImg, downScaleImg);
+
+	//seperateUV(uvImg, uImg, vImg);
 	//blur(yImg , yOutImg , Size(5, 5) , Point(-1,-1),  BORDER_REPLICATE);
-	GaussianBlur(yImg, yOutImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
-	combineUV(uImg, vImg, uvImg);
+	//GaussianBlur(yImg, yOutImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	//combineUV(uImg, vImg, uvImg);
 //Seperate
 #if 0
 	char UFileName[256], VFileName[256];
@@ -115,7 +119,7 @@ int main()
 
 #endif
 
-#if 1
+#if 0
 	char GaussBlurY5x5FileName[FILENAME_LEN];
 	sprintf(GaussBlurY5x5FileName, "%s//gaussBlur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
 	remove(GaussBlurY5x5FileName);
@@ -130,10 +134,24 @@ int main()
 
 #endif
 
+#if 1
+	char DownScaleBy2FileName[FILENAME_LEN];
+	sprintf(DownScaleBy2FileName, "%s//downScaleBy2_1440_1080", OUTPUT_FILE_PATH);
+	remove(DownScaleBy2FileName);
+
+	ofstream downScaleBy2File;
+	downScaleBy2File.open(DownScaleBy2FileName, ios::binary);
+	if (!downScaleBy2File){
+		printf("read UV File Error\n");
+		return 0;
+	}
+	downScaleBy2File.write((char *)downScaleImg.data, IMG_HEIGHT * IMG_PITCH / 4);
+#endif
 
 #ifdef PC_TEST
 	imshow("yImg", yImg);
 	imshow("yOutImg", yOutImg);
+	imshow("downScaleImg", downScaleImg);
 
 	cvWaitKey(0);
 #endif
