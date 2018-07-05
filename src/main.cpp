@@ -3,6 +3,7 @@
 #include "Seperate.h"
 #include "Combine.h"
 #include "downScaleBy2.h"
+#include "upScaleBy2.h"
 #include "common.h"
 #include "iostream"
 #include "fstream"
@@ -43,10 +44,12 @@ int main()
 	Mat  uImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 	Mat  vImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 	Mat  downScaleImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+	Mat  upScaleImg(IMG_HEIGHT , IMG_PITCH , CV_8U);
 
 	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
 	downScaleBy2(yImg, downScaleImg);
+	upScaleBy2(downScaleImg, upScaleImg);
 
 	//seperateUV(uvImg, uImg, vImg);
 	//blur(yImg , yOutImg , Size(5, 5) , Point(-1,-1),  BORDER_REPLICATE);
@@ -134,7 +137,7 @@ int main()
 
 #endif
 
-#if 1
+#if 0
 	char DownScaleBy2FileName[FILENAME_LEN];
 	sprintf(DownScaleBy2FileName, "%s//downScaleBy2_1440_1080", OUTPUT_FILE_PATH);
 	remove(DownScaleBy2FileName);
@@ -148,10 +151,25 @@ int main()
 	downScaleBy2File.write((char *)downScaleImg.data, IMG_HEIGHT * IMG_PITCH / 4);
 #endif
 
+#if 1
+	char UpScaleBy2FileName[FILENAME_LEN];
+	sprintf(UpScaleBy2FileName, "%s//upScaleBy2_1440_1080", OUTPUT_FILE_PATH);
+	remove(UpScaleBy2FileName);
+
+	ofstream upScaleBy2File;
+	upScaleBy2File.open(UpScaleBy2FileName, ios::binary);
+	if (!upScaleBy2File){
+		printf("read UV File Error\n");
+		return 0;
+	}
+	upScaleBy2File.write((char *)upScaleImg.data, IMG_HEIGHT * IMG_PITCH);
+#endif
+
 #ifdef PC_TEST
 	imshow("yImg", yImg);
-	imshow("yOutImg", yOutImg);
-	imshow("downScaleImg", downScaleImg);
+	//imshow("yOutImg", yOutImg);
+	//imshow("downScaleImg", downScaleImg);
+	imshow("upScaleImg", upScaleImg);
 
 	cvWaitKey(0);
 #endif
