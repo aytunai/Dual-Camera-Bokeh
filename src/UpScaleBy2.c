@@ -236,7 +236,6 @@ static inline ErrorType ScheduleInputDMA(upScaleBy2_Context *ctx, xi_point *srcP
 	return NO_ERROR;
 }
 
-#if 1
 //内部保证数据是aligned的(DMA传输和计算都能达到较好的效果,虽然逻辑感觉会有问题，但是DMA在搬移的时候会剔除无用的数据)
 void upScaleBy2_Cadence(upScaleBy2_Context *ctx , int phase)
 {
@@ -321,9 +320,9 @@ void upScaleBy2_Cadence(upScaleBy2_Context *ctx , int phase)
 	}
 }
 
-#else
+
 //内部保证数据是aligned的(DMA传输和计算都能达到较好的效果,虽然逻辑感觉会有问题，但是DMA在搬移的时候会剔除无用的数据)
-void upScaleBy2_Cadence(upScaleBy2_Context *ctx , int phase)
+void upScaleBy2_C(upScaleBy2_Context *ctx , int phase)
 {
 	xvTile *pTileIn  = ctx->tileIn[phase];
 	xvTile *pTileOut = ctx->tileOut[phase];
@@ -351,7 +350,7 @@ void upScaleBy2_Cadence(upScaleBy2_Context *ctx , int phase)
 		}
 	}
 }
-#endif
+
 
 
 static ErrorType upScaleBy2_Process(upScaleBy2_Context *ctx)
