@@ -27,6 +27,7 @@
 #include "Combine.h"
 #include "DownScaleBy2.h"
 #include "UpScaleBy2.h"
+#include "GaussBlur_5x5.h"
 
 #include "Debug.h"
 
@@ -70,6 +71,7 @@ int main()
 //	GaussBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 	downScaleBy2_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 	upScaleBy2_U8(yuv_out.pY , yuv.pY , PIC_WIDTH >> 1 , PIC_HEIGHT >> 1 , PIC_PITCH >> 1);
+	GaussBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 	//Ö´ÐÐcombine
 //	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
 
@@ -152,6 +154,16 @@ int main()
 
 	FILE *fpYUVOut = fopen(UpScaleBy2FileName , "wb+");
 	fwrite(yuv.pY , PIC_PITCH * PIC_HEIGHT, sizeof(uint8_t) , fpYUVOut);
+	fclose(fpYUVOut);
+#endif
+
+#ifdef DEBUG_OUTPUT_GAUSSBLUR_5x5_FILE
+	char GaussBlur5x5FileName[256];
+	sprintf(GaussBlur5x5FileName, "%s//gaussBlur_y_5x5_1440_1080", OUTPUT_FILE_PATH);
+	remove(GaussBlur5x5FileName);
+
+	FILE *fpYUVOut = fopen(GaussBlur5x5FileName , "wb+");
+	fwrite(yuv_out.pY , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpYUVOut);
 	fclose(fpYUVOut);
 #endif
 
