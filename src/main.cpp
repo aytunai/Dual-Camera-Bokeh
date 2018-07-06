@@ -45,16 +45,21 @@ int main()
 	Mat  vImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 	Mat  downScaleImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 	Mat  upScaleImg(IMG_HEIGHT , IMG_PITCH , CV_8U);
+	Mat  upScaleGaussImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+	Mat  compareGaussImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
 	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
 	downScaleBy2(yImg, downScaleImg);
 	upScaleBy2(downScaleImg, upScaleImg);
+	GaussianBlur(upScaleImg, upScaleGaussImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	pyrUp(downScaleImg, compareGaussImg, Size(IMG_PITCH ,IMG_HEIGHT));
 
 	//seperateUV(uvImg, uImg, vImg);
 	//blur(yImg , yOutImg , Size(5, 5) , Point(-1,-1),  BORDER_REPLICATE);
 	//GaussianBlur(yImg, yOutImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
 	//combineUV(uImg, vImg, uvImg);
+
 //Seperate
 #if 0
 	char UFileName[256], VFileName[256];
@@ -122,21 +127,23 @@ int main()
 
 #endif
 
+//GaussBlur 3x3
 #if 0
-	char GaussBlurY5x5FileName[FILENAME_LEN];
-	sprintf(GaussBlurY5x5FileName, "%s//gaussBlur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
-	remove(GaussBlurY5x5FileName);
+	char GaussBlurY3x3FileName[FILENAME_LEN];
+	sprintf(GaussBlurY3x3FileName, "%s//gaussBlur_y_3x3_1440_1080", OUTPUT_FILE_PATH);
+	remove(GaussBlurY3x3FileName);
 
-	ofstream gaussBlurY5x5File;
-	gaussBlurY5x5File.open(GaussBlurY5x5FileName, ios::binary);
-	if (!gaussBlurY5x5File){
+	ofstream gaussBlurY3x3File;
+	gaussBlurY3x3File.open(GaussBlurY3x3FileName, ios::binary);
+	if (!gaussBlurY3x3File){
 		printf("read UV File Error\n");
 		return 0;
 	}
-	gaussBlurY5x5File.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
+	gaussBlurY3x3File.write((char *)yOutImg.data, IMG_HEIGHT * IMG_PITCH);
 
 #endif
 
+//downScaleBy2
 #if 0
 	char DownScaleBy2FileName[FILENAME_LEN];
 	sprintf(DownScaleBy2FileName, "%s//downScaleBy2_1440_1080", OUTPUT_FILE_PATH);
@@ -151,7 +158,8 @@ int main()
 	downScaleBy2File.write((char *)downScaleImg.data, IMG_HEIGHT * IMG_PITCH / 4);
 #endif
 
-#if 1
+//upScaleBy2
+#if 0
 	char UpScaleBy2FileName[FILENAME_LEN];
 	sprintf(UpScaleBy2FileName, "%s//upScaleBy2_1440_1080", OUTPUT_FILE_PATH);
 	remove(UpScaleBy2FileName);
@@ -165,11 +173,28 @@ int main()
 	upScaleBy2File.write((char *)upScaleImg.data, IMG_HEIGHT * IMG_PITCH);
 #endif
 
+//GaussBlur 5x5
+#if 1
+	char GaussBlurY5x5FileName[FILENAME_LEN];
+	sprintf(GaussBlurY5x5FileName, "%s//gaussBlur_y_5x5_1440_1080", OUTPUT_FILE_PATH);
+	remove(GaussBlurY5x5FileName);
+
+	ofstream gaussBlurY5x5File;
+	gaussBlurY5x5File.open(GaussBlurY5x5FileName, ios::binary);
+	if (!gaussBlurY5x5File){
+		printf("read UV File Error\n");
+		return 0;
+	}
+	gaussBlurY5x5File.write((char *)upScaleGaussImg.data, IMG_HEIGHT * IMG_PITCH);
+
+#endif
 #ifdef PC_TEST
 	imshow("yImg", yImg);
 	//imshow("yOutImg", yOutImg);
 	//imshow("downScaleImg", downScaleImg);
 	imshow("upScaleImg", upScaleImg);
+	imshow("upScaleGaussImg", upScaleGaussImg);
+	imshow("compareGaussImg", compareGaussImg);
 
 	cvWaitKey(0);
 #endif
