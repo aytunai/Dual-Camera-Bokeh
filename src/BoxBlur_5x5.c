@@ -244,8 +244,8 @@ static ErrorType BoxBlur_5x5_U8_Cadence(TileBuffer *buffer)
 
 	int sstride = XI_TILE_GET_PITCH(pTileIn);
 	int dstride = XI_TILE_GET_PITCH(pTileOut);
-	int width   = XI_TILE_GET_WIDTH(pTileIn);
-	int height  = XI_TILE_GET_HEIGHT(pTileIn);
+	int width   = XI_TILE_GET_WIDTH(pTileOut);
+	int height  = XI_TILE_GET_HEIGHT(pTileOut);
 
 	xb_vec2Nx8U *psrc = OFFSET_PTR_2NX8U( XI_TILE_GET_DATA_PTR(pTileIn) , -BOX_BLUR_5x5_RADIUS , sstride , -BOX_BLUR_5x5_RADIUS );
 	xb_vec2Nx8U *pdst = (xb_vec2Nx8U *)XI_TILE_GET_DATA_PTR(pTileOut);
