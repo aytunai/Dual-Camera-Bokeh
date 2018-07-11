@@ -15,7 +15,10 @@
 //#define BOX_BLUR_3x3_DEBUG
 
 //从外部读取YUV数据
-#define DEBUG_READ_YUV_FILE
+//#define DEBUG_READ_YUV_FILE
+
+//从外部读取depth数据
+#define DEBUG_READ_DEPTH_FILE
 
 //输出Seperate模块调试信息的数据
 //#define DEBUG_SEPERATE_OUTPUT_FILE
@@ -34,7 +37,9 @@
 
 //#define DEBUG_OUTPUT_UPSCALE_BY2_FILE
 
-#define DEBUG_OUTPUT_GAUSSBLUR_5x5_FILE
+//#define DEBUG_OUTPUT_GAUSSBLUR_5x5_FILE
+
+#define DEBUG_OUTPUT_DEPTH_UPSCALEAVG_FILE
 
 
 

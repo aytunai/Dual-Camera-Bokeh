@@ -1,34 +1,21 @@
 /*
- * GaussBlur_5x5.c
+ * UpDepthByAvg.c
  *
  *  Created on: 2018-3-26
  *      Author: AiTong
  */
 
 #include "stdio.h"
-#include "GaussBlur_5x5.h"
+#include "UpDepthByAvg.h"
 
 //自定义的tile的大小
-#define GAUSS_BLUR_TILE_WIDTH		256
-#define GAUSS_BLUR_TILE_HEIGHT 		128
-#define GAUSS_BLUR_TILE_PITCH		256
+#define UP_DEPTH_BY_AVG_TILE_WIDTH			128
+#define UP_DEPTH_BY_AVG_TILE_HEIGHT 		128
+#define UP_DEPTH_BY_AVG_TILE_PITCH		 	128
 
-/*
- * Gauss 5x5 Filter:
- * 				1	4	6	4	1		|		1	4	7	4	1
- * 				4	16	24	16	4		|		4	16	26	16	4
- * 				6	24	36	24	6		|		7	26	41	26	7
- * 				4	16	24	16	4		|		4	16	26	16	4
- * 				1	4	6	4	1		|		1	4	7	4	1
- *
- * 	Total Sum:
- * 						256				|			273
- *
- * 	Select Left Filter Methods
- */
 
-//gaussBlur的半径
-#define GAUSS_BLUR_5x5_RADIUS			2
+//boxBlur的半径
+#define UP_DEPTH_BY_AVG_3x3_RADIUS		1
 
 /*
  * Context data structure.
@@ -66,12 +53,12 @@ typedef struct {
 	xi_point srcPos[2];			//更新当前Tile的位置
 	xi_point dstPos[2];
 
-}GaussBlur_5x5_Context, *pGaussBlur_5x5_Context;
+}UpDepthByAvg_Context, *pUpDepthByAvg_Context;
 
 /*
  * Initialize context.
  */
-static ErrorType GaussBlur5x5_InitializeContext(GaussBlur_5x5_Context *ctx , void *pSrc , int swidth , int sheight , int spitch ,
+static ErrorType UpDepthByAvg_InitializeContext(UpDepthByAvg_Context *ctx , void *pSrc , int swidth , int sheight , int spitch ,
 		void *pDst , int dwidth , int dheight , int dpitch)
 {
 	// Set DMA parameters. Changing DMA parameters and tile size will affect the
@@ -90,16 +77,16 @@ static ErrorType GaussBlur5x5_InitializeContext(GaussBlur_5x5_Context *ctx , voi
 	int32_t sframeSize = spitch * sheight;
 	int32_t dframeSize = dpitch * dheight;
 
-	ctx->srcTile.width  = GAUSS_BLUR_TILE_WIDTH;
-	ctx->srcTile.height = GAUSS_BLUR_TILE_HEIGHT;
+	ctx->srcTile.width  = UP_DEPTH_BY_AVG_TILE_WIDTH;
+	ctx->srcTile.height = UP_DEPTH_BY_AVG_TILE_HEIGHT;
 	//pitch must large or equal than (tile width + radius * 2)
-	ctx->srcTile.pitch  = GAUSS_BLUR_TILE_PITCH + 2 * GAUSS_BLUR_5x5_RADIUS;
-	ctx->dstTile.width  = GAUSS_BLUR_TILE_WIDTH;
-	ctx->dstTile.height = GAUSS_BLUR_TILE_HEIGHT;
-	ctx->dstTile.pitch  = GAUSS_BLUR_TILE_PITCH;
+	ctx->srcTile.pitch  = UP_DEPTH_BY_AVG_TILE_PITCH + 2 * UP_DEPTH_BY_AVG_3x3_RADIUS;
+	ctx->dstTile.width  = UP_DEPTH_BY_AVG_TILE_WIDTH  * 2;
+	ctx->dstTile.height = UP_DEPTH_BY_AVG_TILE_HEIGHT * 2;
+	ctx->dstTile.pitch  = UP_DEPTH_BY_AVG_TILE_PITCH  * 2;
 
-	ctx->tileWidth = GAUSS_BLUR_TILE_WIDTH , ctx->tileHeight = GAUSS_BLUR_TILE_HEIGHT;
-	ctx->tilePitch = GAUSS_BLUR_TILE_PITCH;
+	ctx->tileWidth = UP_DEPTH_BY_AVG_TILE_WIDTH , ctx->tileHeight = UP_DEPTH_BY_AVG_TILE_HEIGHT;
+	ctx->tilePitch = UP_DEPTH_BY_AVG_TILE_PITCH;
 
 	// Initialize TileManager
 	xvTileManager *pTM = &ctx->tileMgr;
@@ -143,7 +130,7 @@ static ErrorType GaussBlur5x5_InitializeContext(GaussBlur_5x5_Context *ctx , voi
 	// Allocate input tile double-buffer. Here we allocate the double buffer 0 and 1 in
 	// different DataRAMs, to avoid access conflict between them.
 	// add 64bytes in order to aligned with 64 bytes
-	int tileInputBuffSize  = (ctx->srcTile.pitch + 2*GAUSS_BLUR_5x5_RADIUS) * (ctx->srcTile.height + 2*GAUSS_BLUR_5x5_RADIUS) + 64;
+	int tileInputBuffSize  = (ctx->srcTile.pitch) * (ctx->srcTile.height + 2 * UP_DEPTH_BY_AVG_3x3_RADIUS) + 64;
 	int tileOutputBuffSize = (ctx->dstTile.pitch) * (ctx->dstTile.height);
 
 	// Allocate Input tile 0/1 in DataRAM 0/1
@@ -164,9 +151,9 @@ static ErrorType GaussBlur5x5_InitializeContext(GaussBlur_5x5_Context *ctx , voi
 		return TM_ERROR;
 	}
 	SETUP_TILE(ctx->tileBuffer[0].pIn , ctx->pdramIn[0], tileInputBuffSize, ctx->pSrcFrame, ctx->srcTile.width,
-			ctx->srcTile.height, ctx->srcTile.pitch, XV_TILE_U8, GAUSS_BLUR_5x5_RADIUS, GAUSS_BLUR_5x5_RADIUS, 0, 0, DATA_ALIGNED_64);
+			ctx->srcTile.height, ctx->srcTile.pitch, XV_TILE_U8, UP_DEPTH_BY_AVG_3x3_RADIUS, UP_DEPTH_BY_AVG_3x3_RADIUS, 0, 0, DATA_ALIGNED_64);
 	SETUP_TILE(ctx->tileBuffer[1].pIn , ctx->pdramIn[1], tileInputBuffSize, ctx->pSrcFrame, ctx->srcTile.width,
-			ctx->srcTile.height, ctx->srcTile.pitch, XV_TILE_U8, GAUSS_BLUR_5x5_RADIUS, GAUSS_BLUR_5x5_RADIUS, 0, 0, DATA_ALIGNED_64);
+			ctx->srcTile.height, ctx->srcTile.pitch, XV_TILE_U8, UP_DEPTH_BY_AVG_3x3_RADIUS, UP_DEPTH_BY_AVG_3x3_RADIUS, 0, 0, DATA_ALIGNED_64);
 
 	// Allocate Output tile 0/1 in DataRAM 0/1
 	ctx->pdramOut[0] = xvAllocateBuffer(pTM, tileOutputBuffSize, XV_MEM_BANK_COLOR_0, 64);
@@ -206,7 +193,7 @@ static ErrorType GaussBlur5x5_InitializeContext(GaussBlur_5x5_Context *ctx , voi
  *           one output tile. The processing kernel runs on a tile buffer, applying
  *           affine transform on the input tile and write the result to the output tile.
  */
-static inline ErrorType ScheduleInputDMA(GaussBlur_5x5_Context *ctx, xi_point *srcPos ,  xi_point *dstPos, TileBuffer *tileBuf)
+static inline ErrorType ScheduleInputDMA(UpDepthByAvg_Context *ctx, xi_point *srcPos ,  xi_point *dstPos, TileBuffer *tileBuf)
 {
 	xvTileManager *pTM = &ctx->tileMgr;
 
@@ -247,113 +234,188 @@ static inline ErrorType ScheduleInputDMA(GaussBlur_5x5_Context *ctx, xi_point *s
 	return NO_ERROR;
 }
 
-//GaussBlur , size = 5x5,cadence版本
-static ErrorType GaussBlur_5x5_U8_Cadence(TileBuffer *buffer)
+#define xaUpscaleByAvg_row2N__1(vec0 , vec1)														\
+		{																							\
+			xb_vec2Nx8U vsel0 , vtail;																\
+			valign a_load = IVP_LA2NX8U_PP(rsrc);													\
+			rsrc = OFFSET_PTR_2NX8U(rsrc , 1 , sstride , 0);										\
+			IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, swidth + 1 - j);									\
+			IVP_LAV2NX8U_XP(vtail, a_load, rsrc, swidth + 1 - j - 2 * XCHAL_IVPN_SIMD_WIDTH);		\
+			rsrc = bsrc;																			\
+			vnext = IVP_SEL2NX8I(vtail, vsel0, IVP_SELI_8B_ROTATE_RIGHT_1);							\
+			vecTmp = IVP_AVGRU2NX8U(vsel0, vnext);													\
+			IVP_DSEL2NX8UI(vec1, vec0, vecTmp, vsel0, IVP_DSELI_8B_INTERLEAVE_1);					\
+			IVP_SAV2NX8U_XP(vec0, a_store, rdste, dwidth - 2 * j);									\
+			IVP_SAV2NX8U_XP(vec1, a_store, rdste, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);		\
+			IVP_SAPOS2NX8U_FP(a_store , rdste);														\
+			rdste = OFFSET_PTR_2NX8U(rdste , 1 , dstride , offd);									\
+		}
+
+
+
+//depth UpSample By Average
+static ErrorType UpDepthByAvg_U8_Cadence(TileBuffer *buffer)
 {
 	xvTile *pTileIn  = buffer->pIn;
 	xvTile *pTileOut = buffer->pOut;
 
 	int sstride = XI_TILE_GET_PITCH(pTileIn);
 	int dstride = XI_TILE_GET_PITCH(pTileOut);
-	int width   = XI_TILE_GET_WIDTH(pTileOut);
-	int height  = XI_TILE_GET_HEIGHT(pTileOut);
+	int swidth  = XI_TILE_GET_WIDTH(pTileIn);
+	int sheight = XI_TILE_GET_HEIGHT(pTileIn);
+	int dwidth  = XI_TILE_GET_WIDTH(pTileOut);
+	int dheight = XI_TILE_GET_HEIGHT(pTileOut);
 
-	xb_vec2Nx8U *psrc = OFFSET_PTR_2NX8U( XI_TILE_GET_DATA_PTR(pTileIn) , -GAUSS_BLUR_5x5_RADIUS , sstride , -GAUSS_BLUR_5x5_RADIUS );
+	xb_vec2Nx8U *psrc = (xb_vec2Nx8U *)XI_TILE_GET_DATA_PTR(pTileIn);
 	xb_vec2Nx8U *pdst = (xb_vec2Nx8U *)XI_TILE_GET_DATA_PTR(pTileOut);
 
 	xb_vec2Nx8U* __restrict rsrc;
-	xb_vec2Nx8U* __restrict rdst;
+	xb_vec2Nx8U* __restrict bsrc;
+	xb_vec2Nx8U* __restrict rdsto;
+	xb_vec2Nx8U* __restrict rdste;
+
+	xb_vec2Nx8U vnext;
+	xb_vec2Nx8U vecTmp;
+
+	xb_vec2Nx8U vec00 , vec01 , vec10 , vec11 , vec20 , vec21;
 
 	int i , j = 0;
-	valign a_load, a_store = IVP_ZALIGN();
-	for( ; j < width - XCHAL_IVPN_SIMD_WIDTH ; j += 2 * XCHAL_IVPN_SIMD_WIDTH , psrc++ , pdst++){
+	valign a_store = IVP_ZALIGN();
+	for( ; j < swidth - XCHAL_IVPN_SIMD_WIDTH ; j += 2 * XCHAL_IVPN_SIMD_WIDTH , psrc++ , pdst +=2){
 
-		rsrc = psrc;
-		rdst = pdst;
+		int offd = dstride - MIN(4 * XCHAL_IVPN_SIMD_WIDTH , dwidth - 2 * j);
 
-		int offs = sstride - MIN(4 * XCHAL_IVPN_SIMD_WIDTH , width + 4 - j);
-		int offd = dstride - MIN(2 * XCHAL_IVPN_SIMD_WIDTH , width - j);
+		rsrc  = psrc;
+		rdste = pdst;
+		rdsto = OFFSET_PTR_2NX8U(rdste , 1 , dstride , 0);		//偏移一行
+		//下面这个的结果将会保存在偶数行
 
-        xb_vecNx16 vec00 , vec01 , vec10 , vec11 , vec20 , vec21 , vec30 , vec31 , vec40 , vec41;
-
-		#define xaGaussFilter_5x5_U8_load_row2N(reg)                                                 \
-		{                                                                                            \
-			xb_vec2Nx8 vsel0, vtail;                                                                 \
-			a_load = IVP_LA2NX8U_PP(rsrc);                                                           \
-			IVP_LAV2NX8_XP(vsel0, a_load, rsrc, width - j + 4);                                      \
-			IVP_LAV2NX8_XP(vtail, a_load, rsrc, width - j + 4 - 2 * XCHAL_IVPN_SIMD_WIDTH);          \
-			rsrc = OFFSET_PTR_2NX8U(rsrc , 1 , offs , 0);											 \
-			xb_vec2Nx24 w = IVP_MULUS4T2N8XR8(vtail, vsel0, 0x04060401);                             \
-			IVP_ADDWUA2NX8(w, 0, IVP_SEL2NX8I(vtail, vsel0, IVP_SELI_8B_ROTATE_RIGHT_4));            \
-			reg##0 = IVP_PACKL2NX24_0(w);                                                            \
-			reg##1 = IVP_PACKL2NX24_1(w);                                                            \
+		{
+			xb_vec2Nx8U vsel0 , vtail;
+			valign a_load = IVP_LA2NX8U_PP(rsrc);
+			bsrc = OFFSET_PTR_2NX8U(rsrc , 1 , sstride , 0);
+			IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, swidth + 1 - j);
+			IVP_LAV2NX8U_XP(vtail, a_load, rsrc, swidth + 1 - j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+			rsrc = bsrc;
+			vnext = IVP_SEL2NX8I(vtail, vsel0, IVP_SELI_8B_ROTATE_RIGHT_1);
+			vecTmp = IVP_AVGRU2NX8U(vsel0, vnext);
+			IVP_DSEL2NX8UI(vec01, vec00, vecTmp, vsel0, IVP_DSELI_8B_INTERLEAVE_1);
+			IVP_SAV2NX8U_XP(vec00, a_store, rdste, dwidth - 2 * j);
+			IVP_SAV2NX8U_XP(vec01, a_store, rdste, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+			IVP_SAPOS2NX8U_FP(a_store , rdste);
+			rdste = OFFSET_PTR_2NX8U(rdste , 1 , dstride , offd);
 		}
 
-        xaGaussFilter_5x5_U8_load_row2N(vec0);
-        xaGaussFilter_5x5_U8_load_row2N(vec1);
-        xaGaussFilter_5x5_U8_load_row2N(vec2);
-        xaGaussFilter_5x5_U8_load_row2N(vec3);
 
-        for(i = 0 ; i < height ; i++){
+		//Warning: top的那一条边是无效的
+		for(i = 0 ; i < sheight ; i++){
 
-        	xaGaussFilter_5x5_U8_load_row2N(vec4);
-        	vec00 = IVP_ADDNX16(vec00, vec40);
-        	vec01 = IVP_ADDNX16(vec01, vec41);
-            xb_vec2Nx24 w = IVP_MULPI2NR8X16(0x0601, vec21, vec20, vec01, vec00);
-            IVP_MULUSAI2NX8X16(w, 4, IVP_ADDNX16(vec11, vec31), IVP_ADDNX16(vec10, vec30));
-            IVP_SAV2NX8U_XP(IVP_PACKVRU2NX24(w, 8), a_store, rdst, (width - j));
-            IVP_SAPOS2NX8U_FP(a_store, rdst);
-            rdst = OFFSET_PTR_2NX8U(rdst, 1, offd, 0);
+			{
+				xb_vec2Nx8U vsel0 , vtail;
+				valign a_load = IVP_LA2NX8U_PP(rsrc);
+				bsrc = OFFSET_PTR_2NX8U(rsrc , 1 , sstride , 0);
+				IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, swidth + 1 - j);
+				IVP_LAV2NX8U_XP(vtail, a_load, rsrc, swidth + 1 - j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+				rsrc = bsrc;
+				vnext = IVP_SEL2NX8I(vtail, vsel0, IVP_SELI_8B_ROTATE_RIGHT_1);
+				vecTmp = IVP_AVGRU2NX8U(vsel0, vnext);
+				IVP_DSEL2NX8UI(vec21, vec20, vecTmp, vsel0, IVP_DSELI_8B_INTERLEAVE_1);
+				IVP_SAV2NX8U_XP(vec20, a_store, rdste, dwidth - 2 * j);
+				IVP_SAV2NX8U_XP(vec21, a_store, rdste, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+				IVP_SAPOS2NX8U_FP(a_store , rdste);
+				rdste = OFFSET_PTR_2NX8U(rdste , 1 , dstride , offd);
+			}
 
-            vec00 = vec10;	vec01 = vec11;
-            vec10 = vec20;	vec11 = vec21;
-            vec20 = vec30;	vec21 = vec31;
-            vec30 = vec40;	vec31 = vec41;
-        }
+			vec10 = IVP_AVGRU2NX8U(vec00, vec20);
+			vec11 = IVP_AVGRU2NX8U(vec01, vec21);
+
+			IVP_SAV2NX8U_XP(vec10, a_store, rdsto, dwidth - 2 * j);
+			IVP_SAV2NX8U_XP(vec11, a_store, rdsto, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+			IVP_SAPOS2NX8U_FP(a_store , rdsto);
+			rdsto = OFFSET_PTR_2NX8U(rdsto , 1 , dstride , offd);
+
+			vec00 = vec20;
+			vec01 = vec21;
+		}
+		//最后一行需要特别处理
+		vec10 = IVP_AVGRU2NX8U(vec00, vec20);
+		vec11 = IVP_AVGRU2NX8U(vec01, vec21);
+
+		IVP_SAV2NX8U_XP(vec10, a_store, rdsto, dwidth - 2 * j);
+		IVP_SAV2NX8U_XP(vec11, a_store, rdsto, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+		IVP_SAPOS2NX8U_FP(a_store , rdsto);
+		rdsto = OFFSET_PTR_2NX8U(rdsto , 1 , dstride , offd);
 	}
 
-	if(j < width){
-		rsrc = psrc;
-		rdst = pdst;
+	if(j < swidth + 1){
 
-		int offs = sstride - (width + 4 - j);
-		int offd = dstride - (width - j);
+		int offd = dstride - (dwidth - 2 * j);
 
-		xb_vecNx16 vec00 , vec01 , vec10 , vec11 , vec20 , vec21 , vec30 , vec31 , vec40 , vec41;
-		#define xaGaussFilter_5x5_U8_load_rowN(reg)                                                   \
-		{                                                                                           \
-			xb_vec2Nx8 vsel0;                                                                 		\
-			a_load = IVP_LA2NX8U_PP(rsrc);                                                          \
-			IVP_LAV2NX8_XP(vsel0, a_load, rsrc, width - j + 4);                                     \
-			rsrc = OFFSET_PTR_2NX8U(rsrc , 1 , offs , 0);											\
-			xb_vec2Nx24 w = IVP_MULUS4T2N8XR8(0, vsel0, 0x04060401);                             	\
-			IVP_ADDWUA2NX8(w, 0, IVP_SEL2NX8I(0, vsel0, IVP_SELI_8B_ROTATE_RIGHT_4));            	\
-			reg##0 = IVP_PACKL2NX24_0(w);                                                           \
-			reg##1 = IVP_PACKL2NX24_1(w);                                                           \
-		}
-		xaGaussFilter_5x5_U8_load_rowN(vec0);
-		xaGaussFilter_5x5_U8_load_rowN(vec1);
-		xaGaussFilter_5x5_U8_load_rowN(vec2);
-		xaGaussFilter_5x5_U8_load_rowN(vec3);
-
-		for(i = 0 ; i < height ; i++){
-
-			xaGaussFilter_5x5_U8_load_rowN(vec4);
-        	vec00 = IVP_ADDNX16(vec00, vec40);
-        	vec01 = IVP_ADDNX16(vec01, vec41);
-            xb_vec2Nx24 w = IVP_MULPI2NR8X16(0x0601, vec21, vec20, vec01, vec00);
-            IVP_MULUSAI2NX8X16(w, 4, IVP_ADDNX16(vec11, vec31), IVP_ADDNX16(vec10, vec30));
-            IVP_SAV2NX8U_XP(IVP_PACKVRU2NX24(w, 8), a_store, rdst, (width - j));
-            IVP_SAPOS2NX8U_FP(a_store, rdst);
-            rdst = OFFSET_PTR_2NX8U(rdst, 1, offd, 0);
-
-            vec00 = vec10;	vec01 = vec11;
-			vec10 = vec20;	vec11 = vec21;
-			vec20 = vec30;	vec21 = vec31;
-			vec30 = vec40;	vec31 = vec41;
+		rsrc  = psrc;
+		rdste = pdst;
+		rdsto = OFFSET_PTR_2NX8U(rdste , 1 , dstride , 0);		//偏移一行
+		//下面这个的结果将会保存在偶数行
+#define xaUpscaleByAvg_rowN(vec0,vec1)																\
+		{																							\
+			xb_vec2Nx8U vsel0 ;																		\
+			valign a_load = IVP_LA2NX8U_PP(rsrc);													\
+			bsrc = OFFSET_PTR_2NX8U(rsrc , 1 , sstride , 0);										\
+			IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, swidth + 1 - j);									\
+			rsrc = bsrc;																			\
+			vnext = IVP_SEL2NX8I(vsel0, vsel0, IVP_SELI_8B_ROTATE_RIGHT_1);							\
+			vecTmp = IVP_AVGRU2NX8U(vsel0, vnext);													\
+			IVP_DSEL2NX8UI(vec1, vec0, vecTmp, vsel0, IVP_DSELI_8B_INTERLEAVE_1);					\
+			IVP_SAV2NX8U_XP(vec0, a_store, rdste, dwidth - 2 * j);									\
+			IVP_SAV2NX8U_XP(vec1, a_store, rdste, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);		\
+			IVP_SAPOS2NX8U_FP(a_store , rdste);														\
+			rdste = OFFSET_PTR_2NX8U(rdste , 1 , dstride , offd);									\
 		}
 
+		xaUpscaleByAvg_rowN(vec00 , vec01);
+
+		//Warning: top的那一条边是无效的
+		for(i = 0 ; i < sheight ; i++){
+
+			xaUpscaleByAvg_rowN(vec20 , vec21);
+
+			vec10 = IVP_AVGRU2NX8U(vec00, vec20);
+			vec11 = IVP_AVGRU2NX8U(vec01, vec21);
+			vec00 = vec20;
+			vec01 = vec21;
+			IVP_SAV2NX8U_XP(vec10, a_store, rdsto, dwidth - 2 * j);
+			IVP_SAV2NX8U_XP(vec11, a_store, rdsto, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+			IVP_SAPOS2NX8U_FP(a_store , rdsto);
+			rdsto = OFFSET_PTR_2NX8U(rdsto , 1 , dstride , offd);
+		}
+		//最后一行需要特别处理
+		vec10 = IVP_AVGRU2NX8U(vec00, vec20);
+		vec11 = IVP_AVGRU2NX8U(vec01, vec21);
+
+		IVP_SAV2NX8U_XP(vec10, a_store, rdsto, dwidth - 2 * j);
+		IVP_SAV2NX8U_XP(vec11, a_store, rdsto, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
+		IVP_SAPOS2NX8U_FP(a_store , rdsto);
+		rdsto = OFFSET_PTR_2NX8U(rdsto , 1 , dstride , offd);
 	}
+
+
+	return NO_ERROR;
+}
+
+//Y-component boxBlur , size = 3x3,C版本
+static ErrorType UpDepthByAvg_U8_C(TileBuffer *buffer)
+{
+	xvTile *pTileIn  = buffer->pIn;
+	xvTile *pTileOut = buffer->pOut;
+
+	int sstride = XI_TILE_GET_PITCH(pTileIn);
+	int dstride = XI_TILE_GET_PITCH(pTileOut);
+	int width   = XI_TILE_GET_WIDTH(pTileIn);
+	int height  = XI_TILE_GET_HEIGHT(pTileIn);
+
+	uint8_t *psrc = (uint8_t *)XI_TILE_GET_DATA_PTR(pTileIn);
+	uint8_t *pdst = (uint8_t *)XI_TILE_GET_DATA_PTR(pTileOut);
+
+
 
 	return NO_ERROR;
 }
@@ -361,7 +423,7 @@ static ErrorType GaussBlur_5x5_U8_Cadence(TileBuffer *buffer)
 /*
  * Process context.
  */
-static ErrorType GaussBlur_5x5_Process(GaussBlur_5x5_Context *ctx)
+static ErrorType UpDepthByAvg_Process(UpDepthByAvg_Context *ctx)
 {
 	xvTileManager *pTM = &ctx->tileMgr; // get pointer of TileManager
 	int32_t bufIndex = 0; // this is the double-buffer index
@@ -380,12 +442,13 @@ static ErrorType GaussBlur_5x5_Process(GaussBlur_5x5_Context *ctx)
 	}
 
 	// Calculate how many tiles we need to process
-	int numTiles = ((ctx->pOutFrame->frameHeight + ctx->tileHeight - 1) / ctx->tileHeight)
-			* ((ctx->pOutFrame->frameWidth + ctx->tileWidth - 1) / ctx->tileWidth);
+	int numTiles = ((ctx->pSrcFrame->frameHeight + ctx->tileHeight - 1) / ctx->tileHeight)
+			* ((ctx->pSrcFrame->frameWidth + ctx->tileWidth - 1) / ctx->tileWidth);
 
 	// Tile processing loop
 	int i;
 	for (i = 0; i < numTiles; i++) {
+
 		// Get current double-buffer for processing
 		TileBuffer *pTileBuffer = &ctx->tileBuffer[bufIndex];
 
@@ -393,7 +456,12 @@ static ErrorType GaussBlur_5x5_Process(GaussBlur_5x5_Context *ctx)
 		WAIT_FOR_TILE(pTM, pTileBuffer->pIn);
 
 		// Process the Buffer
-		GaussBlur_5x5_U8_Cadence(pTileBuffer);
+#ifdef CADENCE_OPT_UP_DEPTH_BY_AVG
+		UpDepthByAvg_U8_Cadence(pTileBuffer);
+#else
+		UpDepthByAvg_U8_C(pTileBuffer);
+
+#endif
 
 		// Schedule output DMA
 		int32_t error1 = xvReqTileTransferOut(pTM, pTileBuffer->pOut , 0);
@@ -425,7 +493,7 @@ errorHandler:
 /*
  * Release context.
  */
-static ErrorType GaussBlur_5x5_ReleaseContext(GaussBlur_5x5_Context *ctx)
+static ErrorType UpDepthByAvg_ReleaseContext(UpDepthByAvg_Context *ctx)
 {
 	xvTileManager *pTM = &ctx->tileMgr;
 
@@ -449,18 +517,22 @@ static ErrorType GaussBlur_5x5_ReleaseContext(GaussBlur_5x5_Context *ctx)
 }
 
 
-//GaussBlur for Y-component
-void GaussBlur_5x5_U8(uint8_t *src , uint8_t *dst , int width , int height , int pitch)
+//BoxBlur for Y-component
+void UpDepthByAvg_U8(uint8_t *src , uint8_t *dst , int width , int height , int pitch)
 {
 
-	GaussBlur_5x5_Context ctx;
+	UpDepthByAvg_Context ctx;
 
-	GaussBlur5x5_InitializeContext(&ctx , src , width , height , pitch ,dst , width , height , pitch);
+	int dwidth  = width  * 2;
+	int dheight = height * 2;
+	int dpitch  = pitch * 2;
+
+	UpDepthByAvg_InitializeContext(&ctx , src , width , height , pitch ,dst , dwidth , dheight , dpitch);
 
 
-	GaussBlur_5x5_Process(&ctx);
+	UpDepthByAvg_Process(&ctx);
 
-	GaussBlur_5x5_ReleaseContext(&ctx);
+	UpDepthByAvg_ReleaseContext(&ctx);
 
 }
 
