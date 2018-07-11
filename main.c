@@ -29,6 +29,7 @@
 #include "UpScaleBy2.h"
 #include "GaussBlur_5x5.h"
 #include "UpDepthByAvg.h"
+#include "AlphaBlend.h"
 
 #include "Debug.h"
 
@@ -54,6 +55,7 @@ int main()
 
 	uint8_t *pdepth = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT / 4);
 	uint8_t *pUpDepth = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT);
+	uint8_t *pBokeh = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT);
 
 #ifdef DEBUG_READ_YUV_FILE
 	unsigned char YUVFileName[256];
@@ -92,6 +94,8 @@ int main()
 //	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
 
 	UpDepthByAvg_U8(pdepth , pUpDepth , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
+	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+	AlphaBlend_U8(yuv.pY , yuv_out.pY , pUpDepth , pBokeh , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 
 
 #ifdef DEBUG_SEPERATE_OUTPUT_FILE
@@ -195,6 +199,16 @@ int main()
 	fclose(fpUpDepth);
 #endif
 
+#ifdef DEBUG_OUTPUT_Y_BOKEH_FILE
+	char YBokehFileName[256];
+	sprintf(YBokehFileName, "%s//y_bokeh_1440_1080", OUTPUT_FILE_PATH);
+	remove(YBokehFileName);
+
+	FILE *fpYBokeh = fopen(YBokehFileName , "wb+");
+	fwrite(pBokeh , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpYBokeh);
+	fclose(fpYBokeh);
+#endif
+
 
 	free(yuv.pYUV);
 	free(yuv.pU);
@@ -205,6 +219,7 @@ int main()
 
 	free(pdepth);
 	free(pUpDepth);
+	free(pBokeh);
 
 	return 0;
 }
