@@ -289,42 +289,28 @@ static ErrorType UpDepthByAvg_U8_Cadence(TileBuffer *buffer)
 		rdste = pdst;
 		rdsto = OFFSET_PTR_2NX8U(rdste , 1 , dstride , 0);		//偏移一行
 		//下面这个的结果将会保存在偶数行
-
-		{
-			xb_vec2Nx8U vsel0 , vtail;
-			valign a_load = IVP_LA2NX8U_PP(rsrc);
-			bsrc = OFFSET_PTR_2NX8U(rsrc , 1 , sstride , 0);
-			IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, swidth + 1 - j);
-			IVP_LAV2NX8U_XP(vtail, a_load, rsrc, swidth + 1 - j - 2 * XCHAL_IVPN_SIMD_WIDTH);
-			rsrc = bsrc;
-			vnext = IVP_SEL2NX8I(vtail, vsel0, IVP_SELI_8B_ROTATE_RIGHT_1);
-			vecTmp = IVP_AVGRU2NX8U(vsel0, vnext);
-			IVP_DSEL2NX8UI(vec01, vec00, vecTmp, vsel0, IVP_DSELI_8B_INTERLEAVE_1);
-			IVP_SAV2NX8U_XP(vec00, a_store, rdste, dwidth - 2 * j);
-			IVP_SAV2NX8U_XP(vec01, a_store, rdste, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
-			IVP_SAPOS2NX8U_FP(a_store , rdste);
-			rdste = OFFSET_PTR_2NX8U(rdste , 1 , dstride , offd);
+#define xaUpscaleByAvg_row2N(vec0 , vec1)															\
+		{																							\
+			xb_vec2Nx8U vsel0 , vtail;																\
+			valign a_load = IVP_LA2NX8U_PP(rsrc);													\
+			bsrc = OFFSET_PTR_2NX8U(rsrc , 1 , sstride , 0);										\
+			IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, swidth + 1 - j);									\
+			IVP_LAV2NX8U_XP(vtail, a_load, rsrc, swidth + 1 - j - 2 * XCHAL_IVPN_SIMD_WIDTH);		\
+			rsrc = bsrc;																			\
+			vnext = IVP_SEL2NX8I(vtail, vsel0, IVP_SELI_8B_ROTATE_RIGHT_1);							\
+			vecTmp = IVP_AVGRU2NX8U(vsel0, vnext);													\
+			IVP_DSEL2NX8UI(vec1, vec0, vecTmp, vsel0, IVP_DSELI_8B_INTERLEAVE_1);					\
+			IVP_SAV2NX8U_XP(vec0, a_store, rdste, dwidth - 2 * j);									\
+			IVP_SAV2NX8U_XP(vec1, a_store, rdste, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);		\
+			IVP_SAPOS2NX8U_FP(a_store , rdste);														\
+			rdste = OFFSET_PTR_2NX8U(rdste , 1 , dstride , offd);									\
 		}
 
-
+		xaUpscaleByAvg_row2N(vec00 , vec01);
 		//Warning: top的那一条边是无效的
 		for(i = 0 ; i < sheight ; i++){
 
-			{
-				xb_vec2Nx8U vsel0 , vtail;
-				valign a_load = IVP_LA2NX8U_PP(rsrc);
-				bsrc = OFFSET_PTR_2NX8U(rsrc , 1 , sstride , 0);
-				IVP_LAV2NX8U_XP(vsel0, a_load, rsrc, swidth + 1 - j);
-				IVP_LAV2NX8U_XP(vtail, a_load, rsrc, swidth + 1 - j - 2 * XCHAL_IVPN_SIMD_WIDTH);
-				rsrc = bsrc;
-				vnext = IVP_SEL2NX8I(vtail, vsel0, IVP_SELI_8B_ROTATE_RIGHT_1);
-				vecTmp = IVP_AVGRU2NX8U(vsel0, vnext);
-				IVP_DSEL2NX8UI(vec21, vec20, vecTmp, vsel0, IVP_DSELI_8B_INTERLEAVE_1);
-				IVP_SAV2NX8U_XP(vec20, a_store, rdste, dwidth - 2 * j);
-				IVP_SAV2NX8U_XP(vec21, a_store, rdste, dwidth - 2 * j - 2 * XCHAL_IVPN_SIMD_WIDTH);
-				IVP_SAPOS2NX8U_FP(a_store , rdste);
-				rdste = OFFSET_PTR_2NX8U(rdste , 1 , dstride , offd);
-			}
+			xaUpscaleByAvg_row2N(vec20,vec21);
 
 			vec10 = IVP_AVGRU2NX8U(vec00, vec20);
 			vec11 = IVP_AVGRU2NX8U(vec01, vec21);
