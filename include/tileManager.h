@@ -587,15 +587,9 @@ typedef struct xvTileManagerStruct
    (((uint8_t *) XV_TILE_GET_DATA_PTR(t) + (XV_TILE_GET_WIDTH(t) + XV_TILE_GET_EDGE_WIDTH(t)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) + (XV_TILE_GET_PITCH(t) * (XV_TILE_GET_HEIGHT(t) + XV_TILE_GET_EDGE_HEIGHT(t) - 1)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) / XV_TYPE_CHANNELS(XV_TILE_GET_TYPE(t))) \
     <= ((uint8_t *) XV_TILE_GET_BUFF_PTR(t) + XV_TILE_GET_BUFF_SIZE(t))))
 
-//#define XV_IS_TILE_OK(t)                                                                                                                                                                                                                                                                                           \
-//  ((t) &&                                                                                                                                                                                                                                                                                                          \
-//   (XV_TILE_GET_DATA_PTR(t)) &&                                                                                                                                                                                                                                                                                    \
-//   (XV_TILE_GET_BUFF_PTR(t)) &&                                                                                                                                                                                                                                                                                    \
-//   ((XV_TILE_GET_PITCH(t)) >= ((XV_TILE_GET_WIDTH(t) + 2 * XV_TILE_GET_EDGE_WIDTH(t)) * XV_TYPE_CHANNELS(XV_TILE_GET_TYPE(t)))) &&                                                                                                                                                                                 \
-//   (((uint8_t *) XV_TILE_GET_DATA_PTR(t) - (XV_TILE_GET_EDGE_WIDTH(t) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) + XV_TILE_GET_PITCH(t) * XV_TILE_GET_EDGE_HEIGHT(t) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) / XV_TYPE_CHANNELS(XV_TILE_GET_TYPE(t))))                                                        \
-//    >= ((uint8_t *) XV_TILE_GET_BUFF_PTR(t))) &&                                                                                                                                                                                                                                                                   \
-//   (((uint8_t *) XV_TILE_GET_DATA_PTR(t) + (XV_TILE_GET_WIDTH(t) + XV_TILE_GET_EDGE_WIDTH(t)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) + (XV_TILE_GET_PITCH(t) * (XV_TILE_GET_HEIGHT(t) + XV_TILE_GET_EDGE_HEIGHT(t) - 1)) * XV_TYPE_ELEMENT_SIZE(XV_TILE_GET_TYPE(t)) / XV_TYPE_CHANNELS(XV_TILE_GET_TYPE(t))) \
-//    <= ((uint8_t *) XV_TILE_GET_BUFF_PTR(t) + XV_TILE_GET_BUFF_SIZE(t))))
+
+//Here is Modify
+
 
 /***********************************
 *    Function  Prototypes
