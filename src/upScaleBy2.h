@@ -7,7 +7,7 @@
 
 int upScaleBy2(const cv::Mat& src, const cv::Mat& dst);
 
-
+int upScaleByAvg2(const cv::Mat& src, const cv::Mat& dst);
 
 
 

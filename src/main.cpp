@@ -23,8 +23,9 @@ using namespace std;
 
 int main()
 {
-	char inputImgFileName[FILENAME_LEN];
+	char inputImgFileName[FILENAME_LEN], depthFileName[FILENAME_LEN];
 	sprintf(inputImgFileName, "%s//in_yuv_1440_1080", INPUT_FILE_PATH);
+	sprintf(depthFileName, "%s//in_alpha_720_540", INPUT_FILE_PATH);
 
 	uint8_t *pYUV = (uint8_t *)malloc(IMG_PITCH * IMG_HEIGHT * 3 / 2);
 	FILE *fpYUV = fopen(inputImgFileName , "rb+");
@@ -35,6 +36,17 @@ int main()
 	}
 	fread(pYUV, IMG_PITCH * IMG_HEIGHT * 3 / 2, sizeof(uint8_t), fpYUV);
 	fclose(fpYUV);
+
+	uint8_t *pDepth = (uint8_t *)malloc(IMG_PITCH * IMG_HEIGHT / 4);
+	FILE *fpDepth = fopen(depthFileName , "rb+");
+	if (fpDepth == NULL){
+		printf("File = %s , Line = %d , Func=%s:", __FILE__, __LINE__, __FUNCTION__);
+		printf("Read Depth File Error\n");
+		return FILE_READ_ERROR;
+	}
+	fread(pDepth, IMG_PITCH * IMG_HEIGHT / 4, sizeof(uint8_t), fpDepth);
+	fclose(fpDepth);
+
 
 	uint8_t *pY  = pYUV;
 	uint8_t *pUV = pY + (IMG_PITCH * IMG_HEIGHT);
@@ -48,12 +60,18 @@ int main()
 	Mat  upScaleGaussImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 	Mat  compareGaussImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
+	Mat  depthImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U, pDepth);
+	Mat  upDepthImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+
 	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
-	downScaleBy2(yImg, downScaleImg);
-	upScaleBy2(downScaleImg, upScaleImg);
-	GaussianBlur(upScaleImg, upScaleGaussImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
-	pyrUp(downScaleImg, compareGaussImg, Size(IMG_PITCH ,IMG_HEIGHT));
+	upScaleByAvg2(depthImg, upDepthImg);
+
+
+	//downScaleBy2(yImg, downScaleImg);
+	//upScaleBy2(downScaleImg, upScaleImg);
+	//GaussianBlur(upScaleImg, upScaleGaussImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	//pyrUp(downScaleImg, compareGaussImg, Size(IMG_PITCH ,IMG_HEIGHT));
 
 	//seperateUV(uvImg, uImg, vImg);
 	//blur(yImg , yOutImg , Size(5, 5) , Point(-1,-1),  BORDER_REPLICATE);
@@ -174,7 +192,7 @@ int main()
 #endif
 
 //GaussBlur 5x5
-#if 1
+#if 0
 	char GaussBlurY5x5FileName[FILENAME_LEN];
 	sprintf(GaussBlurY5x5FileName, "%s//gaussBlur_y_5x5_1440_1080", OUTPUT_FILE_PATH);
 	remove(GaussBlurY5x5FileName);
@@ -188,13 +206,37 @@ int main()
 	gaussBlurY5x5File.write((char *)upScaleGaussImg.data, IMG_HEIGHT * IMG_PITCH);
 
 #endif
+
+
+//upScaleyAvg2 width depth
+#if 1
+	char upDepthAvg2FileName[FILENAME_LEN];
+	sprintf(upDepthAvg2FileName, "%s//out_alpha_1440_1080", OUTPUT_FILE_PATH);
+	remove(upDepthAvg2FileName);
+
+	ofstream upDepthFile;
+	upDepthFile.open(upDepthAvg2FileName, ios::binary);
+	if (!upDepthFile){
+		printf("read UV File Error\n");
+		return 0;
+	}
+	upDepthFile.write((char *)upDepthImg.data, IMG_HEIGHT * IMG_PITCH);
+
+#endif
+
+
+
+
 #ifdef PC_TEST
-	imshow("yImg", yImg);
+	//imshow("yImg", yImg);
 	//imshow("yOutImg", yOutImg);
 	//imshow("downScaleImg", downScaleImg);
-	imshow("upScaleImg", upScaleImg);
-	imshow("upScaleGaussImg", upScaleGaussImg);
-	imshow("compareGaussImg", compareGaussImg);
+	//imshow("upScaleImg", upScaleImg);
+	//imshow("upScaleGaussImg", upScaleGaussImg);
+	//imshow("compareGaussImg", compareGaussImg);
+
+	//imshow("depthImg", depthImg);
+	//imshow("upDepthImg", upDepthImg);
 
 	cvWaitKey(0);
 #endif
