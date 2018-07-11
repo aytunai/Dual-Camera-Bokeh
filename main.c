@@ -28,6 +28,7 @@
 #include "DownScaleBy2.h"
 #include "UpScaleBy2.h"
 #include "GaussBlur_5x5.h"
+#include "UpDepthByAvg.h"
 
 #include "Debug.h"
 
@@ -51,6 +52,9 @@ int main()
 	yuv_out.pU   = (uint8_t *)malloc( (PIC_PITCH >> 1) * (PIC_HEIGHT >> 1) * sizeof(uint8_t) );
 	yuv_out.pV   = (uint8_t *)malloc( (PIC_PITCH >> 1) * (PIC_HEIGHT >> 1) * sizeof(uint8_t) );
 
+	uint8_t *pdepth = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT / 4);
+	uint8_t *pUpDepth = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT);
+
 #ifdef DEBUG_READ_YUV_FILE
 	unsigned char YUVFileName[256];
 	sprintf(YUVFileName , "%s//in_yuv_1440_1080" , INPUT_FILE_PATH);
@@ -63,17 +67,31 @@ int main()
 	fclose(fpInput);
 #endif
 
+#ifdef DEBUG_READ_DEPTH_FILE
+	unsigned char depthFileName[256];
+	sprintf(depthFileName , "%s//in_alpha_720_540" , INPUT_FILE_PATH);
+	FILE *fpDepth = fopen(depthFileName , "rb+");
+	if(fpDepth == NULL){
+		printf("Open Depth File Error\n");
+		return 0;
+	}
+	fread(pdepth , (PIC_PITCH * PIC_HEIGHT) * sizeof(uint8_t) / 4 , sizeof(uint8_t) , fpDepth);
+	fclose(fpDepth);
+#endif
+
 	//执行seperate的操作
 //	UV_Seperate_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 //
 //	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 //	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 //	GaussBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
-	downScaleBy2_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
-	upScaleBy2_U8(yuv_out.pY , yuv.pY , PIC_WIDTH >> 1 , PIC_HEIGHT >> 1 , PIC_PITCH >> 1);
-	GaussBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+//	downScaleBy2_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+//	upScaleBy2_U8(yuv_out.pY , yuv.pY , PIC_WIDTH >> 1 , PIC_HEIGHT >> 1 , PIC_PITCH >> 1);
+//	GaussBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 	//执行combine
 //	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
+
+	UpDepthByAvg_U8(pdepth , pUpDepth , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
 
 
 #ifdef DEBUG_SEPERATE_OUTPUT_FILE
@@ -167,6 +185,16 @@ int main()
 	fclose(fpYUVOut);
 #endif
 
+#ifdef DEBUG_OUTPUT_DEPTH_UPSCALEAVG_FILE
+	char UpDepthFileName[256];
+	sprintf(UpDepthFileName, "%s//out_alpha_1440_1080", OUTPUT_FILE_PATH);
+	remove(UpDepthFileName);
+
+	FILE *fpUpDepth = fopen(UpDepthFileName , "wb+");
+	fwrite(pUpDepth , (PIC_PITCH * PIC_HEIGHT), sizeof(uint8_t) , fpUpDepth);
+	fclose(fpUpDepth);
+#endif
+
 
 	free(yuv.pYUV);
 	free(yuv.pU);
@@ -174,6 +202,9 @@ int main()
 	free(yuv_out.pYUV);
 	free(yuv_out.pU);
 	free(yuv_out.pV);
+
+	free(pdepth);
+	free(pUpDepth);
 
 	return 0;
 }
