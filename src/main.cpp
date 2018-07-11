@@ -4,6 +4,7 @@
 #include "Combine.h"
 #include "downScaleBy2.h"
 #include "upScaleBy2.h"
+#include "alphaBlend.h"
 #include "common.h"
 #include "iostream"
 #include "fstream"
@@ -64,10 +65,13 @@ int main()
 	Mat  upDepthImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
 	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+	Mat yOutImg1(IMG_HEIGHT, IMG_PITCH, CV_8U);
+	Mat yBokehImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
 
 	upScaleByAvg2(depthImg, upDepthImg);
-
-
+	blur(yImg, yOutImg, Size(5, 5), Point(-1, -1), BORDER_REPLICATE);
+	alphaBlend(yImg, yOutImg, upDepthImg, yBokehImg);
+	
 	//downScaleBy2(yImg, downScaleImg);
 	//upScaleBy2(downScaleImg, upScaleImg);
 	//GaussianBlur(upScaleImg, upScaleGaussImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
@@ -207,9 +211,8 @@ int main()
 
 #endif
 
-
 //upScaleyAvg2 width depth
-#if 1
+#if 0
 	char upDepthAvg2FileName[FILENAME_LEN];
 	sprintf(upDepthAvg2FileName, "%s//out_alpha_1440_1080", OUTPUT_FILE_PATH);
 	remove(upDepthAvg2FileName);
@@ -224,7 +227,21 @@ int main()
 
 #endif
 
+//Last Bokeh Effect
+#if 1
+	char bokehFileName[FILENAME_LEN];
+	sprintf(bokehFileName, "%s//y_bokeh_1440_1080", OUTPUT_FILE_PATH);
+	remove(bokehFileName);
 
+	ofstream bokehFile;
+	bokehFile.open(bokehFileName, ios::binary);
+	if (!bokehFile){
+		printf("read bokeh File Error\n");
+		return 0;
+	}
+	bokehFile.write((char *)yBokehImg.data, IMG_HEIGHT * IMG_PITCH);
+
+#endif
 
 
 #ifdef PC_TEST
@@ -237,6 +254,7 @@ int main()
 
 	//imshow("depthImg", depthImg);
 	//imshow("upDepthImg", upDepthImg);
+	imshow("yBokehImg", yBokehImg);
 
 	cvWaitKey(0);
 #endif
