@@ -63,7 +63,7 @@ int main()
 	para->width = PIC_WIDTH;
 	para->height = PIC_HEIGHT;
 	para->stride = PIC_PITCH;
-	para->blurYLevel = 1;
+	para->blurYLevel = 30;
 	para->blurUVLevel = 1;
 
 	int blurYLevel = para->blurYLevel, blurUVLevel = para->blurUVLevel;
@@ -93,6 +93,350 @@ int main()
 	seperateUV(uvImg, uImg, vImg);
 	if (blurYLevel == 1){
 		downScaleBy2(yImg, blurYImg);
+	}
+	else if (blurYLevel == 2){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		GaussianBlur(buf1, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 3){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, blurYImg, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 3){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, blurYImg, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 4){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		GaussianBlur(buf1, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 5){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf2, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 6){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf1, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 7){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		blur(buf1, blurYImg, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 8){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf2, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 9){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf2, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 10){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf2, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 11){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf1, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 12){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf1, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 13){
+		Mat  buf1(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		downScaleBy2(yImg, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf1, blurYImg, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 14){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 15){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 16){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 17){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 18){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 19){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 20){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 21){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 22){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 23){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 24){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 25){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf2, buf1, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 26){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 27){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 28){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		GaussianBlur(buf1, buf2, Size(3, 3), 0.0, 0.0, BORDER_REPLICATE);
+
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 29){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+
+		upScaleBy2(buf2, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
+	}
+	else if (blurYLevel == 30){
+		Mat  buf0(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  buf1(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		Mat  buf2(IMG_HEIGHT >> 2, IMG_PITCH >> 2, CV_8U);
+		downScaleBy2(yImg, buf0);
+		downScaleBy2(buf0, buf1);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf1, buf2, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(buf2, buf1, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+
+		upScaleBy2(buf1, buf0);
+		GaussianBlur(buf0, blurYImg, Size(5, 5), 0.0, 0.0, BORDER_REPLICATE);
 	}
 	else{
 		xa_printf("Other BlurY Level Not Support!\n");
@@ -298,7 +642,7 @@ int main()
 	//Output YUV Data
 #if 1
 	char YUVOutFileName[FILENAME_LEN];
-	sprintf(YUVOutFileName, "%s//yuv_out_1440_1080", OUTPUT_FILE_PATH);
+	sprintf(YUVOutFileName, "%s//yuv_out_1440_1080_%d_%d", OUTPUT_FILE_PATH, blurYLevel, blurUVLevel);
 	remove(YUVOutFileName);
 
 	ofstream yuvOutFile;
@@ -310,6 +654,7 @@ int main()
 	yuvOutFile.write((char *)pYUVOut, IMG_HEIGHT * IMG_PITCH * 3 / 2);
 
 #endif
+	
 
 #ifdef PC_TEST
 	//imshow("yImg", yImg);
