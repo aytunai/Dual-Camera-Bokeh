@@ -23,13 +23,14 @@
 #include "BoxBlur_3x3.h"
 #include "BoxBlur_5x5.h"
 #include "GaussBlur_3x3.h"
-#include "Seperate.h"
+#include "Separate.h"
 #include "Combine.h"
 #include "DownScaleBy2.h"
 #include "UpScaleBy2.h"
 #include "GaussBlur_5x5.h"
 #include "UpDepthByAvg.h"
 #include "AlphaBlend.h"
+#include "BlurImp.h"
 
 #include "Debug.h"
 
@@ -38,8 +39,37 @@
 #define PIC_HEIGHT 1080
 #define PIC_PITCH  1440
 
+//全局申请Buffer内存的大小，为了适配真实的SDK开发环境的方式
+#define MEM_POOL_SIZE	(PIC_WIDTH * PIC_HEIGHT * 8)
+
+//模拟真实的开发环境
+typedef struct {
+	//YUV图像的分辨率
+	int width;
+	int height;
+	int stride;
+	//(暂时只支持blurYLevel = 1,blurUVLevel1)
+	int blurYLevel;		//虚化力度(1-30)
+	int blurUVLevel;	//虚化力度(1-3)
+	//同步标志位,传递进来初始化应该清零
+	int core0Status;
+	int core1Status;
+
+
+	//传递进来的解析作Buffer统一管理
+	uint8_t *pYUV;			//YUV的图像数据	--	外部传递进来的Buffer
+	uint8_t *pDepthMap;		//GPU输出的深度图	--  外部传递进来的Buffer
+	uint8_t *pOut;			//输出的虚化数据	--	外部传递进来的Buffer
+	uint8_t *pMemoryPool;	//统一内存管理
+	uint8_t *pMemoryPool0;	//算法中间所需要的内存池(统一内存管理,解决掉malloc memory的问题),Core0的Global Memory
+	uint8_t *pMemoryPool1;	//算法中间所需要的内存池(统一内存管理,解决掉malloc memory的问题),Core1的Global Memory
+	uint8_t *pMessageBuff;	//VPU调试的buffer信息(CPU端解析并输出结果)
+}CPU2VPU_Para;
+
+
 int main()
 {
+	//这些Buffer都是预先在CPU端开辟好的，从外部传递进来的
 	yuv_t yuv , yuv_out;
 	yuv.pYUV = (uint8_t *)malloc( (PIC_PITCH * PIC_HEIGHT) * sizeof(uint8_t) * 3 / 2);
 	yuv.pY	 = (uint8_t *)yuv.pYUV;
@@ -52,10 +82,11 @@ int main()
 	yuv_out.pUV  = (uint8_t *)yuv_out.pYUV + (PIC_PITCH * PIC_HEIGHT);
 	yuv_out.pU   = (uint8_t *)malloc( (PIC_PITCH >> 1) * (PIC_HEIGHT >> 1) * sizeof(uint8_t) );
 	yuv_out.pV   = (uint8_t *)malloc( (PIC_PITCH >> 1) * (PIC_HEIGHT >> 1) * sizeof(uint8_t) );
-
 	uint8_t *pdepth = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT / 4);
-	uint8_t *pUpDepth = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT);
-	uint8_t *pBokeh = (uint8_t *)malloc(PIC_PITCH * PIC_HEIGHT);
+
+	//申请global memory pool
+	uint8_t *pMemoryPool = (uint8_t *)malloc(MEM_POOL_SIZE);
+
 
 #ifdef DEBUG_READ_YUV_FILE
 	unsigned char YUVFileName[256];
@@ -81,7 +112,114 @@ int main()
 	fclose(fpDepth);
 #endif
 
-	//执行seperate的操作
+	int time_start , time_end;
+
+	TIME_STAMP(time_start);
+
+	//模拟Core-0单核的开发方式
+	CPU2VPU_Para gPara , *para;
+	para = &gPara;
+	para->width  = PIC_WIDTH;
+	para->height = PIC_HEIGHT;
+	para->stride = PIC_PITCH;
+	para->blurYLevel = 1;
+	para->blurUVLevel = 1;
+	para->pYUV = yuv.pYUV;
+	para->pDepthMap = pdepth;
+	para->pOut = yuv_out.pYUV;
+	para->pMemoryPool0 = pMemoryPool;
+	para->pMemoryPool1 = pMemoryPool;
+	para->pMessageBuff = NULL;
+
+	if(CORE_ID == 1){
+		para->pMemoryPool = para->pMemoryPool0;
+	}
+	else{
+		para->pMemoryPool = para->pMemoryPool1;
+	}
+	uint32_t MemStart , MemEnd;
+	MemStart = (uint32_t)para->pMemoryPool;
+	xa_printf("MemoryPool Start Addr:0x%x\n" , MemStart);
+
+	//Check The Parameter
+	int blurYLevel = para->blurYLevel , blurUVLevel = para->blurUVLevel;
+	int width = para->width , height = para->height , stride = para->stride;
+	xa_printf("blurYLevel , blurUVLevel , width, height , stride {%d,%d,%d,%d,%d}\n" ,
+			blurYLevel , blurUVLevel , width , height , stride);
+
+	//Global Memory Manager
+	uint8_t *pSrcUV = para->pYUV + stride * height;
+	int widthU = width >> 1 , heightU = height >> 1 , strideU = stride >> 1 ;
+	int widthV = width >> 1 , heightV = height >> 1 , strideV = stride >> 1 ;
+
+	uint8_t *pSrcU = para->pMemoryPool;		int U_Len = (heightU * strideU);
+	para->pMemoryPool += XA_ALIGN(U_Len , ALIGNED_64B);
+	uint8_t *pSrcV = para->pMemoryPool;		int V_Len = (heightV * strideV);
+	para->pMemoryPool += XA_ALIGN(V_Len , ALIGNED_64B);
+
+	uint8_t *pBlurY = para->pMemoryPool;	int blurY_Len = (height >> 1) * (stride >> 1);
+	para->pMemoryPool += XA_ALIGN(blurY_Len, ALIGNED_64B);
+	uint8_t *pBlurU = para->pMemoryPool;	int blurU_Len = (heightU * strideU);
+	para->pMemoryPool += XA_ALIGN(blurU_Len, ALIGNED_64B);
+	uint8_t *pBlurV = para->pMemoryPool;	int blurV_Len = (heightV * strideV);
+	para->pMemoryPool += XA_ALIGN(blurV_Len, ALIGNED_64B);
+
+	uint8_t *pUpBlurY = para->pMemoryPool;	int upBlurY_Len = (height * stride);
+	para->pMemoryPool += XA_ALIGN(upBlurY_Len, ALIGNED_64B);
+	uint8_t *pUpDepth = para->pMemoryPool;	int upDepth_Len = (height * stride);
+	para->pMemoryPool += XA_ALIGN(upDepth_Len, ALIGNED_64B);
+
+	uint8_t *pOutU = para->pMemoryPool;		int OutU_Len = (heightU * strideU);
+	para->pMemoryPool += XA_ALIGN(OutU_Len, ALIGNED_64B);
+	uint8_t *pOutV = para->pMemoryPool;		int OutV_Len = (heightV * strideV);
+	para->pMemoryPool += XA_ALIGN(OutV_Len, ALIGNED_64B);
+
+	MemEnd = (uint32_t)para->pMemoryPool;
+	xa_printf("MemoryPool End Addr:0x%x\n" , MemEnd);
+	xa_printf("MemoryPool Used:0x%x\n" , (MemEnd - MemStart) );
+	if( (MemEnd - MemStart) > MEM_POOL_SIZE){
+		xa_printf("Run Out of Memory\n");
+		return 0;
+	}
+
+	UV_Separate_U8(pSrcUV , pSrcU , pSrcV , widthU , heightU , strideU);
+	uint8_t *pSrcY = para->pYUV;
+	if( blurYLevel == 1){
+		BlurY_Level_1(pSrcY , pBlurY , width , height , stride);
+	}
+	else{
+		xa_printf("Other BlurY Level Not Support!\n");
+	}
+
+	if(blurUVLevel == 1){
+		BlurUV_Level_1(pSrcU , pSrcV , pBlurU , pBlurV , para->pMemoryPool , widthU , heightU , strideU);
+	}
+	else{
+		xa_printf("Other BlurUV Level Not Support!\n");
+	}
+
+	//Alpha Blending - Y
+	UpDepthByAvg_U8(pBlurY          , pUpBlurY , width >> 1 , height >> 1 , stride >> 1);
+	UpDepthByAvg_U8(para->pDepthMap , pUpDepth , width >> 1 , height >> 1 , stride >> 1);
+	uint8_t *pOutY = para->pOut;
+	AlphaBlend_U8(pSrcY , pUpBlurY , pUpDepth , pOutY , width , height , stride);
+
+	//Alpha Blending - UV
+	AlphaBlend_U8(pSrcU , pBlurU , para->pDepthMap , pOutU , widthU , heightU , strideU);
+	AlphaBlend_U8(pSrcV , pBlurV , para->pDepthMap , pOutV , widthV , heightV , strideV);
+	uint8_t *pOutUV = para->pOut + stride * height;
+	UV_Combine_U8(pOutUV , pOutU , pOutV , widthU , heightU , strideU);
+
+    TIME_STAMP(time_end);
+
+
+    int runtime = time_end - time_start;
+    xa_printf("cycles is %d\n" , runtime);
+
+
+
+
+	//单元模块测试
 //	UV_Seperate_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1) );
 //
 //	BoxBlur_3x3_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
@@ -93,9 +231,9 @@ int main()
 	//执行combine
 //	UV_Combine_U8(yuv.pUV , yuv.pU , yuv.pV , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
 
-	UpDepthByAvg_U8(pdepth , pUpDepth , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
-	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
-	AlphaBlend_U8(yuv.pY , yuv_out.pY , pUpDepth , pBokeh , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+//	UpDepthByAvg_U8(pdepth , pUpDepth , (PIC_WIDTH >> 1) , (PIC_HEIGHT >> 1) , (PIC_PITCH >> 1));
+//	BoxBlur_5x5_U8(yuv.pY , yuv_out.pY , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
+//	AlphaBlend_U8(yuv.pY , yuv_out.pY , pUpDepth , pBokeh , PIC_WIDTH , PIC_HEIGHT , PIC_PITCH);
 
 
 #ifdef DEBUG_SEPERATE_OUTPUT_FILE
@@ -209,6 +347,17 @@ int main()
 	fclose(fpYBokeh);
 #endif
 
+#ifdef DEBUG_OUTPUT_YUV_FILE
+	char YUVOutFileName[256];
+	sprintf(YUVOutFileName, "%s//yuv_out_1440_1080", OUTPUT_FILE_PATH);
+	remove(YUVOutFileName);
+
+	FILE *fpYUVOut = fopen(YUVOutFileName , "wb+");
+	fwrite(yuv_out.pYUV , (PIC_PITCH * PIC_HEIGHT) * 3 / 2 , sizeof(uint8_t) , fpYUVOut);
+	fclose(fpYUVOut);
+#endif
+
+
 
 	free(yuv.pYUV);
 	free(yuv.pU);
@@ -218,8 +367,7 @@ int main()
 	free(yuv_out.pV);
 
 	free(pdepth);
-	free(pUpDepth);
-	free(pBokeh);
+	free(pMemoryPool);
 
 	return 0;
 }
