@@ -40,7 +40,7 @@
 #define PIC_PITCH  1440
 
 //全局申请Buffer内存的大小，为了适配真实的SDK开发环境的方式
-#define MEM_POOL_SIZE	(PIC_WIDTH * PIC_HEIGHT * 8)
+#define MEM_POOL_SIZE	(PIC_WIDTH * PIC_HEIGHT * 16)
 
 //模拟真实的开发环境
 typedef struct {
@@ -122,7 +122,7 @@ int main()
 	para->width  = PIC_WIDTH;
 	para->height = PIC_HEIGHT;
 	para->stride = PIC_PITCH;
-	para->blurYLevel = 1;
+	para->blurYLevel = 30;
 	para->blurUVLevel = 1;
 	para->pYUV = yuv.pYUV;
 	para->pDepthMap = pdepth;
@@ -182,10 +182,100 @@ int main()
 		return 0;
 	}
 
+	for(blurYLevel = 1 ; blurYLevel <= 30; blurYLevel++){
+
+
 	UV_Separate_U8(pSrcUV , pSrcU , pSrcV , widthU , heightU , strideU);
 	uint8_t *pSrcY = para->pYUV;
 	if( blurYLevel == 1){
 		BlurY_Level_1(pSrcY , pBlurY , width , height , stride);
+	}
+	else if(blurYLevel == 2){
+		BlurY_Level_2(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 3){
+		BlurY_Level_3(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 4){
+		BlurY_Level_4(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 5){
+		BlurY_Level_5(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 6){
+		BlurY_Level_6(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 7){
+		BlurY_Level_7(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 8){
+		BlurY_Level_8(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 9){
+		BlurY_Level_9(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 10){
+		BlurY_Level_10(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 11){
+		BlurY_Level_11(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 12){
+		BlurY_Level_12(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 13){
+		BlurY_Level_13(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 14){
+		BlurY_Level_14(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 15){
+		BlurY_Level_15(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 16){
+		BlurY_Level_16(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 17){
+		BlurY_Level_17(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 18){
+		BlurY_Level_18(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 19){
+		BlurY_Level_19(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 20){
+		BlurY_Level_20(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 21){
+		BlurY_Level_21(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 22){
+		BlurY_Level_22(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 23){
+		BlurY_Level_23(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 24){
+		BlurY_Level_24(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 25){
+		BlurY_Level_25(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 26){
+		BlurY_Level_26(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 27){
+		BlurY_Level_27(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 28){
+		BlurY_Level_28(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 29){
+		BlurY_Level_29(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
+	}
+	else if(blurYLevel == 30){
+		BlurY_Level_30(pSrcY , pBlurY , para->pMemoryPool , width , height , stride);
 	}
 	else{
 		xa_printf("Other BlurY Level Not Support!\n");
@@ -193,6 +283,12 @@ int main()
 
 	if(blurUVLevel == 1){
 		BlurUV_Level_1(pSrcU , pSrcV , pBlurU , pBlurV , para->pMemoryPool , widthU , heightU , strideU);
+	}
+	if(blurUVLevel == 2){
+		BlurUV_Level_2(pSrcU , pSrcV , pBlurU , pBlurV , para->pMemoryPool , widthU , heightU , strideU);
+	}
+	if(blurUVLevel == 3){
+		BlurUV_Level_3(pSrcU , pSrcV , pBlurU , pBlurV , para->pMemoryPool , widthU , heightU , strideU);
 	}
 	else{
 		xa_printf("Other BlurUV Level Not Support!\n");
@@ -349,14 +445,14 @@ int main()
 
 #ifdef DEBUG_OUTPUT_YUV_FILE
 	char YUVOutFileName[256];
-	sprintf(YUVOutFileName, "%s//yuv_out_1440_1080", OUTPUT_FILE_PATH);
+	sprintf(YUVOutFileName, "%s//yuv_out_1440_1080_%d_%d", OUTPUT_FILE_PATH , blurYLevel,blurUVLevel);
 	remove(YUVOutFileName);
 
 	FILE *fpYUVOut = fopen(YUVOutFileName , "wb+");
 	fwrite(yuv_out.pYUV , (PIC_PITCH * PIC_HEIGHT) * 3 / 2 , sizeof(uint8_t) , fpYUVOut);
 	fclose(fpYUVOut);
 #endif
-
+	}
 
 
 	free(yuv.pYUV);
