@@ -31,7 +31,7 @@ extern idma_buffer_t *p_idma_2d_desc;
 extern uint8_t ALIGN64 pDramPool0[DRAM_POOL_SIZE] _LOCAL_RAM0_;
 extern uint8_t ALIGN64 pDramPool1[DRAM_POOL_SIZE] _LOCAL_RAM1_;
 
-//#define VPU_LOG
+#define VPU_LOG
 //是否输出VPU的LOG信息
 #ifdef	VPU_LOG
 #define xa_printf(...)	printf(__VA_ARGS__)

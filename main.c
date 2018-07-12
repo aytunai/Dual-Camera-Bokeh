@@ -123,7 +123,7 @@ int main()
 	para->height = PIC_HEIGHT;
 	para->stride = PIC_PITCH;
 	para->blurYLevel = 30;
-	para->blurUVLevel = 1;
+	para->blurUVLevel = 3;
 	para->pYUV = yuv.pYUV;
 	para->pDepthMap = pdepth;
 	para->pOut = yuv_out.pYUV;
@@ -181,9 +181,6 @@ int main()
 		xa_printf("Run Out of Memory\n");
 		return 0;
 	}
-
-	for(blurYLevel = 1 ; blurYLevel <= 30; blurYLevel++){
-
 
 	UV_Separate_U8(pSrcUV , pSrcU , pSrcV , widthU , heightU , strideU);
 	uint8_t *pSrcY = para->pYUV;
@@ -452,7 +449,7 @@ int main()
 	fwrite(yuv_out.pYUV , (PIC_PITCH * PIC_HEIGHT) * 3 / 2 , sizeof(uint8_t) , fpYUVOut);
 	fclose(fpYUVOut);
 #endif
-	}
+
 
 
 	free(yuv.pYUV);
