@@ -19,6 +19,9 @@ using namespace std;
 #define IMG_WIDTH			1440
 #define IMG_HEIGHT			1080
 #define IMG_PITCH			1440
+#define PIC_WIDTH			IMG_WIDTH
+#define PIC_HEIGHT			IMG_HEIGHT
+#define PIC_PITCH			IMG_PITCH
 
 #define FILENAME_LEN		256
 
@@ -27,7 +30,7 @@ int main()
 	char inputImgFileName[FILENAME_LEN], depthFileName[FILENAME_LEN];
 	sprintf(inputImgFileName, "%s//in_yuv_1440_1080", INPUT_FILE_PATH);
 	sprintf(depthFileName, "%s//in_alpha_720_540", INPUT_FILE_PATH);
-
+	//YUV图像的原始数据
 	uint8_t *pYUV = (uint8_t *)malloc(IMG_PITCH * IMG_HEIGHT * 3 / 2);
 	FILE *fpYUV = fopen(inputImgFileName , "rb+");
 	if (fpYUV == NULL){
@@ -37,7 +40,7 @@ int main()
 	}
 	fread(pYUV, IMG_PITCH * IMG_HEIGHT * 3 / 2, sizeof(uint8_t), fpYUV);
 	fclose(fpYUV);
-
+	//Depth图数据
 	uint8_t *pDepth = (uint8_t *)malloc(IMG_PITCH * IMG_HEIGHT / 4);
 	FILE *fpDepth = fopen(depthFileName , "rb+");
 	if (fpDepth == NULL){
@@ -47,30 +50,78 @@ int main()
 	}
 	fread(pDepth, IMG_PITCH * IMG_HEIGHT / 4, sizeof(uint8_t), fpDepth);
 	fclose(fpDepth);
+	//输出的YUV结果
+	uint8_t *pYUVOut = (uint8_t *)malloc(IMG_PITCH * IMG_HEIGHT * 3 / 2);
 
+	uint8_t *pY     = pYUV;
+	uint8_t *pUV    = pY + (IMG_PITCH * IMG_HEIGHT);
+	uint8_t *pYOut  = pYUVOut;
+	uint8_t *pUVOut = pYUVOut + (IMG_PITCH * IMG_HEIGHT);
 
-	uint8_t *pY  = pYUV;
-	uint8_t *pUV = pY + (IMG_PITCH * IMG_HEIGHT);
+	CPU2VPU_Para gPara, *para;
+	para = &gPara;
+	para->width = PIC_WIDTH;
+	para->height = PIC_HEIGHT;
+	para->stride = PIC_PITCH;
+	para->blurYLevel = 1;
+	para->blurUVLevel = 1;
+
+	int blurYLevel = para->blurYLevel, blurUVLevel = para->blurUVLevel;
+	int width = para->width, height = para->height, stride = para->stride;
+	xa_printf("blurYLevel , blurUVLevel , width, height , stride {%d,%d,%d,%d,%d}\n",
+		blurYLevel, blurUVLevel, width, height, stride);
 
 	Mat  yImg(IMG_HEIGHT	 , IMG_PITCH     , CV_8U, pY);
 	Mat uvImg(IMG_HEIGHT >> 1, IMG_PITCH     , CV_8U, pUV);
 	Mat  uImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 	Mat  vImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
-	Mat  downScaleImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
-	Mat  upScaleImg(IMG_HEIGHT , IMG_PITCH , CV_8U);
-	Mat  upScaleGaussImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
-	Mat  compareGaussImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+
+	Mat  blurYImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+	Mat  blurUImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+	Mat  blurVImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 
 	Mat  depthImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U, pDepth);
 	Mat  upDepthImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+	Mat  upblurYImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+	
 
-	Mat yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
-	Mat yOutImg1(IMG_HEIGHT, IMG_PITCH, CV_8U);
-	Mat yBokehImg(IMG_HEIGHT, IMG_PITCH, CV_8U);
+	Mat  yOutImg(IMG_HEIGHT, IMG_PITCH, CV_8U, pYOut);
+	Mat uvOutImg(IMG_HEIGHT >> 1, IMG_PITCH, CV_8U, pUVOut);
+	Mat  uOutImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+	Mat  vOutImg(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
 
+	seperateUV(uvImg, uImg, vImg);
+	if (blurYLevel == 1){
+		downScaleBy2(yImg, blurYImg);
+	}
+	else{
+		xa_printf("Other BlurY Level Not Support!\n");
+	}
+
+	if (blurUVLevel == 1){
+		Mat  blurUTmp(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+		Mat  blurVTmp(IMG_HEIGHT >> 1, IMG_PITCH >> 1, CV_8U);
+
+		blur(uImg, blurUTmp, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(blurUTmp, blurUImg, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(vImg, blurVTmp, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+		blur(blurVTmp, blurVImg, Size(3, 3), Point(-1, -1), BORDER_REPLICATE);
+	}
+	else{
+		xa_printf("Other BlurUV Level Not Support!\n");
+	}
+
+	upScaleByAvg2(blurYImg, upblurYImg);
 	upScaleByAvg2(depthImg, upDepthImg);
-	blur(yImg, yOutImg, Size(5, 5), Point(-1, -1), BORDER_REPLICATE);
-	alphaBlend(yImg, yOutImg, upDepthImg, yBokehImg);
+	alphaBlend(yImg, upblurYImg, upDepthImg, yOutImg);
+
+	alphaBlend(uImg, blurUImg, depthImg, uOutImg);
+	alphaBlend(vImg, blurVImg, depthImg, vOutImg);
+	combineUV(uOutImg, vOutImg, uvOutImg);
+
+	//upScaleByAvg2(depthImg, upDepthImg);
+	//blur(yImg, yOutImg, Size(5, 5), Point(-1, -1), BORDER_REPLICATE);
+	//alphaBlend(yImg, yOutImg, upDepthImg, yBokehImg);
 	
 	//downScaleBy2(yImg, downScaleImg);
 	//upScaleBy2(downScaleImg, upScaleImg);
@@ -228,7 +279,7 @@ int main()
 #endif
 
 //Last Bokeh Effect
-#if 1
+#if 0
 	char bokehFileName[FILENAME_LEN];
 	sprintf(bokehFileName, "%s//y_bokeh_1440_1080", OUTPUT_FILE_PATH);
 	remove(bokehFileName);
@@ -244,6 +295,22 @@ int main()
 #endif
 
 
+	//Output YUV Data
+#if 1
+	char YUVOutFileName[FILENAME_LEN];
+	sprintf(YUVOutFileName, "%s//yuv_out_1440_1080", OUTPUT_FILE_PATH);
+	remove(YUVOutFileName);
+
+	ofstream yuvOutFile;
+	yuvOutFile.open(YUVOutFileName, ios::binary);
+	if (!yuvOutFile){
+		printf("Open YUV Out File Error\n");
+		return 0;
+	}
+	yuvOutFile.write((char *)pYUVOut, IMG_HEIGHT * IMG_PITCH * 3 / 2);
+
+#endif
+
 #ifdef PC_TEST
 	//imshow("yImg", yImg);
 	//imshow("yOutImg", yOutImg);
@@ -254,10 +321,13 @@ int main()
 
 	//imshow("depthImg", depthImg);
 	//imshow("upDepthImg", upDepthImg);
-	imshow("yBokehImg", yBokehImg);
 
 	cvWaitKey(0);
 #endif
+
+	free(pYUV);
+	free(pDepth);
+	free(pYUVOut);
 
 	return NO_ERROR;
 }
