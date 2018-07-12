@@ -5,7 +5,7 @@
  *      Author: AiTong
  */
 
-#include "Seperate.h"
+#include "Combine.h"
 
 
 #define UV_SEP_TILE_WIDTH 	128
@@ -375,7 +375,7 @@ static ErrorType UV_Combine_Process(UV_Combine_Context *ctx)
 		WAIT_FOR_TILE_FAST(pTM, ctx->tileIn[bufIndex][IN_BUFF_NUM - 1]);
 
 		// Process the Buffer
-#ifdef SEPERATE_OPT_CADENCE
+#ifdef COMBINE_CADENCE_OPT
 		UV_Combine_Cadence(ctx , bufIndex);
 #else
 		UV_Combine_C(ctx , bufIndex);
@@ -440,7 +440,7 @@ void UV_Combine_U8(uint8_t *pUV , uint8_t *pU , uint8_t *pV , int width , int he
 
 	int errType = UV_Combine_InitializeContext( &ctx , pUV , pU , pV , width , height , stride);
 	if(errType == TM_ERROR){
-		printf("UV_Combine_InitializeContext failed\n");
+		xa_printf("UV_Combine_InitializeContext failed\n");
 		return ;
 	}
 

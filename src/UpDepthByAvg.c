@@ -472,7 +472,7 @@ static ErrorType UpDepthByAvg_Process(UpDepthByAvg_Context *ctx)
 	WAIT_FOR_TILE(pTM, ctx->tileBuffer[bufIndex ^ 1].pOut);
 
 errorHandler:
-	printf("Done\n");
+	xa_printf("Done\n");
 }
 
 

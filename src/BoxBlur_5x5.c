@@ -435,7 +435,7 @@ static ErrorType BoxBlur_5x5_Process(BoxBlur_5x5_Context *ctx)
 	WAIT_FOR_TILE(pTM, ctx->tileBuffer[bufIndex ^ 1].pOut);
 
 errorHandler:
-	printf("Done\n");
+	xa_printf("Done\n");
 }
 
 

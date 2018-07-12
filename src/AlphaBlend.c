@@ -467,7 +467,7 @@ static ErrorType AlphaBlend_Process(AlphaBlend_Context *ctx)
 	WAIT_FOR_TILE_FAST(pTM, ctx->tileOut[bufIndex ^ 1]);
 
 errorHandler:
-	printf("Done\n");
+	xa_printf("Done\n");
 }
 
 
