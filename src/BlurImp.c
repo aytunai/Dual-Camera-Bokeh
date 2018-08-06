@@ -615,7 +615,7 @@ ErrorType BlurUV_Level_2(uint8_t *psrcU , uint8_t *psrcV , uint8_t *pdstU , uint
 	GaussBlur_5x5_U8(pBuf0V , pBuf1V , width >> 1 , height >> 1 , stride >> 1);
 	//组合成fcvScaleUpBy2Gaussian5x5u8_v2
 	upScaleBy2_U8(pBuf1V , pBuf0V , width >> 1 , height >> 1 , stride >> 1);
-	GaussBlur_5x5_U8(pBuf0V , pdstU , width  , height , stride );
+	GaussBlur_5x5_U8(pBuf0V , pdstV , width  , height , stride );
 }
 
 
@@ -654,7 +654,7 @@ ErrorType BlurUV_Level_3(uint8_t *psrcU , uint8_t *psrcV , uint8_t *pdstU , uint
 	GaussBlur_5x5_U8(pBuf0V , pBuf1V , width >> 1 , height >> 1 , stride >> 1);
 	//组合成fcvScaleUpBy2Gaussian5x5u8_v2
 	upScaleBy2_U8(pBuf1V , pBuf0V , width >> 1 , height >> 1 , stride >> 1);
-	GaussBlur_5x5_U8(pBuf0V , pdstU , width  , height , stride );
+	GaussBlur_5x5_U8(pBuf0V , pdstV , width  , height , stride );
 }
 
 

@@ -1,12 +1,12 @@
 /*
- * Seperate.h
+ * Separate.h
  *
  *  Created on: 2018-4-11
  *      Author: AiTong
  */
 
-#ifndef _SEPERATE_H
-#define _SEPERATE_H
+#ifndef _SEPARATE_H
+#define _SEPARATE_H
 
 #include <xtensa/tie/xt_ivpn.h>
 #include "Utility.h"
